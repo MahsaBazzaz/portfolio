@@ -1,0 +1,1362 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>When a Single Tile Breaks Everything: Game Level Robustness</title>
+    <style>
+                * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: #fafafa;
+        }
+        
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        header {
+            text-align: center;
+            padding: 60px 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            margin-bottom: 40px;
+        }
+        
+        h1 {
+            font-size: 2.5em;
+            margin-bottom: 20px;
+            font-weight: 700;
+        }
+        
+        .subtitle {
+            font-size: 1.2em;
+            opacity: 0.9;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        
+        .authors {
+            margin-top: 20px;
+            font-size: 1.1em;
+        }
+        
+        section {
+            background: white;
+            border-radius: 12px;
+            padding: 40px;
+            margin-bottom: 30px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+        }
+        
+        h2 {
+            color: #667eea;
+            margin-bottom: 25px;
+            font-size: 2em;
+            border-bottom: 3px solid #667eea;
+            padding-bottom: 10px;
+        }
+        
+        h3 {
+            color: #444;
+            margin: 30px 0 15px 0;
+            font-size: 1.4em;
+        }
+        
+        .demo-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin: 30px 0;
+        }
+        
+        .demo-box {
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 20px;
+            text-align: center;
+        }
+        
+        .demo-box h4 {
+            margin-bottom: 15px;
+            color: #667eea;
+            font-size: 1.1em;
+        }
+        
+        .level-canvas {
+            display: inline-block;
+            border: 1px solid #ddd;
+            background: #f8f9fa;
+            margin: 10px 0;
+            cursor: pointer;
+            image-rendering: pixelated;
+            image-rendering: crisp-edges;
+        }
+        
+        .controls {
+            margin-top: 15px;
+        }
+        
+        button {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            margin: 0 5px;
+            font-size: 14px;
+            transition: background 0.3s;
+        }
+        
+        button:hover {
+            background: #764ba2;
+        }
+        
+        button:disabled {
+            background: #cbd5e0;
+            cursor: not-allowed;
+        }
+        
+        .status {
+            margin-top: 10px;
+            font-weight: 600;
+            padding: 8px;
+            border-radius: 4px;
+        }
+        
+        .status.solvable {
+            background: #c6f6d5;
+            color: #22543d;
+        }
+        
+        .status.unsolvable {
+            background: #fed7d7;
+            color: #742a2a;
+        }
+        
+        .game-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin: 30px 0;
+        }
+        
+        .game-card {
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 20px;
+            text-align: center;
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+        
+        .game-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+        }
+        
+        .plot-container {
+            margin: 30px 0;
+            min-height: 400px;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 20px;
+            background: #fcfcfc;
+        }
+        
+        .slider-container {
+            margin: 20px 0;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 8px;
+        }
+        
+        .slider {
+            width: 100%;
+            margin: 10px 0;
+        }
+        
+        .note-box {
+            background: #fef5e7;
+            border-left: 4px solid #f39c12;
+            padding: 20px;
+            margin: 30px 0;
+            border-radius: 4px;
+        }
+        
+        .note-box h4 {
+            color: #e67e22;
+            margin-bottom: 10px;
+        }
+        
+        .links-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin: 30px 0;
+        }
+        
+        .link-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+            text-decoration: none;
+            transition: transform 0.3s;
+        }
+        
+        .link-card:hover {
+            transform: scale(1.05);
+        }
+        
+        .link-card i {
+            font-size: 2em;
+            margin-bottom: 10px;
+        }
+        
+        .tooltip {
+            position: absolute;
+            background: rgba(0,0,0,0.9);
+            color: white;
+            padding: 8px 12px;
+            border-radius: 4px;
+            font-size: 12px;
+            pointer-events: none;
+            z-index: 1000;
+            display: none;
+        }
+        
+        @media (max-width: 768px) {
+            .demo-container {
+                grid-template-columns: 1fr;
+            }
+            
+            h1 {
+                font-size: 1.8em;
+            }
+            
+            section {
+                padding: 20px;
+            }
+        }
+        
+        /* Animation for path visualization */
+        @keyframes pulse {
+            0% { opacity: 0.3; }
+            50% { opacity: 1; }
+            100% { opacity: 0.3; }
+        }
+        
+        .path-tile {
+            animation: pulse 1s infinite;
+        }
+        
+        /* Code highlighting */
+        .code-snippet {
+            background: #f4f4f4;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 15px;
+            margin: 20px 0;
+            overflow-x: auto;
+            font-family: 'Courier New', monospace;
+        }
+    </style>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <header>
+        <h1>When a Single Tile Breaks Everything</h1>
+        <p class="subtitle">Understanding Robustness in Game Level Generation through Structured Discrete Data</p>
+        <div class="authors">Mahsa Bazzaz & Seth Cooper · Northeastern University · FDG 2025</div>
+    </header>
+
+    <div class="container">
+        <!-- Section 1: Structured Discrete Data -->
+        <section id="structured-data">
+            <h2>1. The Fragility of Structured Discrete Data</h2>
+            
+            <p><strong>"Bad data"</strong> often arises when real-world information fails to conform to predefined rules or constraints, causing breakdowns in how that information is processed and interpreted. In the case of highly structured discrete data, these constraints can be especially unforgiving: even a minor deviation from expected formats can cause complete failure.</p>
+
+            <h3>The Fundamental Difference: Pixels vs. Tiles</h3>
+            
+            <p>Consider how differently various data types respond to small changes:</p>
+
+            <div class="comparison-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px; margin: 30px 0;">
+                <div class="comparison-box" style="padding: 20px; background: #f0f7ff; border-radius: 8px;">
+                    <h4 style="color: #2563eb; margin-bottom: 15px;">📷 Traditional Images (CIFAR-10, ImageNet)</h4>
+                    <div style="background: white; padding: 15px; border-radius: 4px; margin-bottom: 15px;">
+                        <canvas id="adversarial-demo" width="300" height="150"></canvas>
+                        <p style="font-size: 0.9em; color: #666; margin-top: 10px; text-align: center;">
+                            Even with carefully crafted adversarial noise affecting <strong>thousands of pixels</strong>,<br>
+                            a panda is still recognizably a panda to humans
+                        </p>
+                    </div>
+                    <ul style="list-style: none; padding: 0;">
+                        <li><strong>Pixel</strong>: Smallest visual element (1/65,536 in a 256×256 image)</li>
+                        <li><strong>Redundancy</strong>: Adjacent pixels often similar</li>
+                        <li><strong>Continuity</strong>: Small changes → small effects</li>
+                        <li><strong>Outcome</strong>: Robust to noise</li>
+                    </ul>
+                </div>
+
+                <div class="comparison-box" style="padding: 20px; background: #fef3f2; border-radius: 8px;">
+                    <h4 style="color: #dc2626; margin-bottom: 15px;">🎮 Game Levels (Structured Discrete)</h4>
+                    <div style="background: white; padding: 15px; border-radius: 4px; margin-bottom: 15px;">
+                        <canvas id="maze-comparison" width="300" height="150"></canvas>
+                        <p style="font-size: 0.9em; color: #666; margin-top: 10px; text-align: center;">
+                            Adding <strong>just one wall tile</strong> (shown in red)<br>
+                            completely blocks the only path to the goal
+                        </p>
+                    </div>
+                    <ul style="list-style: none; padding: 0;">
+                        <li><strong>Tile</strong>: Functional building block with gameplay mechanics</li>
+                        <li><strong>Constraints</strong>: Each tile must satisfy local & global rules</li>
+                        <li><strong>Brittleness</strong>: Small changes → big effects</li>
+                        <li><strong>Outcome</strong>: playable or unplayble</li>
+                    </ul>
+                </div>
+            </div>
+
+            <p>This distinction is crucial. In game levels, a <strong>"tile"</strong> is the smallest building block that constructs both the visual and functional layout of a game's environment, with each tile corresponding to specific gameplay mechanics or aesthetics (walls block movement, keys unlock doors, spikes harm the player). Unlike pixels in images, tiles have <strong>semantic meaning and mechanical function</strong>.</p>
+
+            <h3>Hard Constraints vs. Soft Constraints</h3>
+            
+            <p>The term <strong>"hard constraint"</strong> originates from constraint satisfaction problems (CSP). In this context:</p>
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin: 20px 0;">
+                <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; border-left: 4px solid #28a745;">
+                    <strong>Hard Constraints</strong>: MUST be satisfied
+                    <ul style="margin-top: 10px; margin-left: 20px;">
+                        <li>Level must have path from start to goal</li>
+                        <li>Every key must have a corresponding door</li>
+                        <li>Player spawn point must be on solid ground</li>
+                        <li>No floating platforms (physics consistency)</li>
+                    </ul>
+                </div>
+                <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; border-left: 4px solid #ffc107;">
+                    <strong>Soft Constraints</strong>: PREFERABLY satisfied
+                    <ul style="margin-top: 10px; margin-left: 20px;">
+                        <li>Aesthetic preferences (symmetry)</li>
+                        <li>Difficulty targets</li>
+                        <li>Pacing considerations</li>
+                        <li>Style consistency</li>
+                    </ul>
+                </div>
+            </div>
+
+            <h3>Local Constraints: When Structures Break</h3>
+            
+            <p>Beyond global solvability, game levels must also satisfy <strong>local constraints</strong> - structural patterns that ensure visual and functional coherence. Even state-of-the-art models frequently violate these, producing "broken" content that looks wrong even if technically solvable:</p>
+
+            <div style="background: white; border-radius: 8px; padding: 20px; margin: 20px 0; box-shadow: 0 2px 10px rgba(0,0,0,0.08);">
+                    <div style="text-align: center; margin-bottom: 20px;">
+                        <img src="local_constraint.png" alt="Description of the resource image a.png" style="max-width: 100%; height: auto; border-radius: 4px;">
+                    </div>
+                    
+                    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; margin-bottom: 15px;">
+                        <div style="text-align: center;">
+                            <p style="font-size: 0.9em; color: #666; margin-top: 10px;">
+                                <strong>Cave:</strong> Broken decoration pattern in a maze<br>
+                                (isolated corner piece)
+                            </p>
+                        </div>
+                        <div style="text-align: center;">
+                            <p style="font-size: 0.9em; color: #666; margin-top: 10px;">
+                                <strong>Platform:</strong> Incomplete pipe structure in a platformer<br>
+                                (pipe doesn't connect properly)
+                            </p>
+                        </div>
+                        <div style="text-align: center;">
+                            <p style="font-size: 0.9em; color: #666; margin-top: 10px;">
+                                <strong>Vertical:</strong> Floating decorative element<br>
+                                (flower without stem)
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+
+            <h3>When One Tile Changes Everything</h3>
+            
+            <p>Let's see this brittleness in action. Below are two platformer levels that differ by <strong>exactly one tile</strong>. In platformers, precise jump distances are crucial - watch how removing a single platform tile creates an impossible gap:</p>
+            
+            <div class="demo-container">
+                <div class="demo-box">
+                    <h4>✅ Solvable Level</h4>
+                    <canvas id="solvable-level" class="level-canvas" width="320" height="320"></canvas>
+                    <div class="controls">
+                        <button id="play-solvable">▶ Play Solution</button>
+                        <button id="reset-solvable">↻ Reset</button>
+                    </div>
+                    <div class="status solvable">Player can jump across all gaps!</div>
+                    <p style="font-size: 0.85em; color: #666; margin-top: 10px;">
+                        Maximum jump distance: 3 tiles. All gaps are ≤ 3 tiles wide.
+                    </p>
+                </div>
+                
+                <div class="demo-box">
+                    <h4>❌ One Tile Removed</h4>
+                    <canvas id="unsolvable-level" class="level-canvas" width="320" height="320"></canvas>
+                    <div class="controls">
+                        <button id="play-unsolvable">▶ Try Solution</button>
+                        <button id="reset-unsolvable">↻ Reset</button>
+                    </div>
+                    <div class="status unsolvable">Gap too wide - Level unsolvable!</div>
+                    <p style="font-size: 0.85em; color: #666; margin-top: 10px;">
+                        Single platform tile removed creates a 4-tile gap - <strong>impossible to jump!</strong>
+                    </p>
+                </div>
+            </div>
+
+            <h3>Why This Matters for Machine Learning</h3>
+            
+            <p>This extreme sensitivity creates unique challenges for procedural content generation via machine learning (PCGML):</p>
+            
+            <ol style="margin-left: 20px; line-height: 1.8;">
+                <li><strong>Gradient-based learning struggles</strong>: The discrete nature and binary outcomes (solvable/unsolvable) make it difficult to backpropagate meaningful gradients through neural networks.</li>
+                <li><strong>No tolerance for errors</strong>: Unlike image generation where slight imperfections are acceptable, a single misplaced tile can render a level unplayable. Even state-of-the-art models like transformers, VAEs, and GANs frequently generate levels with broken local structures (pipes that don't connect, floating platforms, inaccessible areas).</li>
+                <li><strong>Training data is sparse</strong>: Unlike millions of images available for computer vision, game level datasets typically contain only hundreds to thousands of examples, making it harder to learn these complex constraints.</li>
+            </ol>
+
+        <!-- Section 2: The GGLC Dataset -->
+        <section id="gglc-dataset">
+            <h2>2. The Generated Game Level Corpus (GGLC)</h2>
+            
+            <h3>Why We Created It</h3>
+            <p>Existing game level datasets are small (typically hundreds of levels) and often copyrighted. We needed a large, diverse, and freely available dataset to study the unique challenges of game level generation.</p>
+            
+            <h3>How We Generate Levels: The Sturgeon Engine</h3>
+            <p>We use <strong>Sturgeon</strong>, a constraint-based level generator that ensures both local patterns (like proper pipe connections) and global constraints (like solvability).</p>
+            
+            <div class="code-snippet">
+                <strong>Sturgeon Generation Process:</strong><br>
+                1. Define tile patterns from example levels<br>
+                2. Set global constraints (start → goal path must exist)<br>
+                3. Set local constraints (structural patterns)<br>
+                4. Use SAT/SMT solvers to find valid solutions<br>
+                5. Verify solvability through pathfinding or playthrough simulation
+            </div>
+
+            
+            <h3>Our Games Collection</h3>
+            <div class="game-display-container" style="max-width: 1000px; margin: 0 auto;">
+
+            <div class="game-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px;">
+                
+                <div class="game-card" style="text-align: center; border: 1px solid #e0e0e0; padding: 15px; border-radius: 8px; display: flex; flex-direction: column; justify-content: space-between;">
+                    <h4>🗿 Cave</h4>
+                    <img src="./games/cave.png" alt="Top-down cave maze" class="level-image" 
+                        style="width: 100%; height: auto; max-height: 180px; object-fit: contain; border-radius: 4px;">
+                    <p>Top-down maze navigation with keys and doors</p>
+                    <p><strong>60,000+ levels</strong></p>
+                    <a href="https://github.com/TheGGLC/TheGGLC/tree/main/cave" target="_blank" 
+                    style="display: inline-block; padding: 10px 20px; text-decoration: none; 
+                            background-color: #4CAF50; color: white; border-radius: 5px; 
+                            font-weight: bold; /* margin-top: 10px removed */">
+                        View Dataset
+                    </a>
+                </div>
+                
+                <div class="game-card" style="text-align: center; border: 1px solid #e0e0e0; padding: 15px; border-radius: 8px; display: flex; flex-direction: column; justify-content: space-between;">
+                    <h4>🏃 Platform</h4>
+                    <img src="./games/platform.png" alt="Mario-inspired platformer" class="level-image" 
+                        style="width: 100%; height: auto; max-height: 250px; object-fit: contain; border-radius: 4px;">
+                    <p>Mario-inspired platformer with jumps</p>
+                    <p><strong>10,000+ levels</strong></p>
+                     <a href="https://github.com/TheGGLC/TheGGLC/tree/main/platform" target="_blank" 
+                    style="display: inline-block; padding: 10px 20px; text-decoration: none; 
+                            background-color: #4CAF50; color: white; border-radius: 5px; 
+                            font-weight: bold; /* margin-top: 10px removed */">
+                        View Dataset
+                    </a>
+                </div>
+
+            </div>
+
+            <div class="game-row" style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px;">
+                
+                <div class="game-card" style="text-align: center; border: 1px solid #e0e0e0; padding: 15px; border-radius: 8px; display: flex; flex-direction: column; justify-content: space-between;">
+                    <h4>📦 Crates</h4>
+                    <img src="./games/soko.png" alt="Sokoban puzzle with crates" class="level-image" 
+                        style="width: 100%; height: auto; max-height: 250px; object-fit: contain; border-radius: 4px;">
+                    <p>Sokoban-style puzzle pushing boxes</p>
+                    <p><strong>10,000+ levels</strong></p>
+                    <a href="https://github.com/TheGGLC/TheGGLC/tree/main/crates" target="_blank" 
+                    style="display: inline-block; padding: 10px 20px; text-decoration: none; 
+                            background-color: #4CAF50; color: white; border-radius: 5px; 
+                            font-weight: bold; /* margin-top: 10px removed */">
+                        View Dataset
+                    </a>
+                </div>
+                
+                <div class="game-card" style="text-align: center; border: 1px solid #e0e0e0; padding: 15px; border-radius: 8px; display: flex; flex-direction: column; justify-content: space-between;">
+                    <h4>🐱 Vertical</h4>
+                    <img src="./games/10003.png" alt="Vertical platformer level" class="level-image" 
+                        style="width: 100%; height: auto; max-height: 250px; object-fit: contain; border-radius: 4px;">
+                    <p>Vertical platformer with wall climbing</p>
+                    <p><strong>10,000+ levels</strong></p>
+                    <a href="https://github.com/TheGGLC/TheGGLC/tree/main/vertical" target="_blank" 
+                    style="display: inline-block; padding: 10px 20px; text-decoration: none; 
+                            background-color: #4CAF50; color: white; border-radius: 5px; 
+                            font-weight: bold; /* margin-top: 10px removed */">
+                        View Dataset
+                    </a>
+                </div>
+
+                <div class="game-card" style="text-align: center; border: 1px solid #e0e0e0; padding: 15px; border-radius: 8px; display: flex; flex-direction: column; justify-content: space-between;">
+                    <h4>⛷️ Slide</h4>
+                    <img src="./games/slide.png" alt="Ice sliding puzzle" class="level-image" 
+                        style="width: 100%; height: auto; max-height: 250px; object-fit: contain; border-radius: 4px;">
+                    <p>Ice physics navigation puzzle</p>
+                    <p><strong>8,000+ levels</strong></p>
+                     <a href="https://github.com/TheGGLC/TheGGLC/tree/main/slide" target="_blank" 
+                    style="display: inline-block; padding: 10px 20px; text-decoration: none; 
+                            background-color: #4CAF50; color: white; border-radius: 5px; 
+                            font-weight: bold; /* margin-top: 10px removed */">
+                        View Dataset
+                    </a>
+                </div>
+
+            </div>
+        </section>
+
+        <!-- Section 3: Robustness Analysis -->
+        <section id="robustness">
+            <h2>3. Measuring Robustness</h2>
+            
+            <h3>What is Data Robustness?</h3>
+            <p>We define <strong>robustness</strong> as the probability that similar inputs share the same label. For game levels, this means measuring how likely small changes are to affect solvability.</p>
+            
+            <div class="code-snippet">
+                <strong>Non-Robustness Formula:</strong><br>
+                ND_r(D) = P[Label(x) ≠ Label(x') | ∃x', distance(x,x') ≤ r]<br><br>
+                Higher values = More sensitive to changes
+            </div>
+
+            <h3>Interactive Robustness Comparison</h3>
+            <div class="slider-container">
+                <label for="radius-slider">Radius (r): <span id="radius-value">0.01</span></label>
+                <input type="range" id="radius-slider" class="slider" min="0" max="100" value="10">
+            </div>
+            <div id="robustness-plot" class="plot-container"></div>
+
+            <h3>Level Embedding Visualization</h3>
+            <p>Hover over points to see the actual game levels. Blue = Solvable, Red = Unsolvable</p>
+            <div id="embedding-plot" class="plot-container"></div>
+
+            <div class="note-box">
+                <h4>💡 Key Finding from Our Research</h4>
+                <p>We measured the <strong>non-robustness</strong> of different game types when subjected to single-tile changes:</p>
+                <ul style="margin: 10px 0 0 20px;">
+                    <li><strong>Cave (maze-like):</strong> 43.1% of changes break solvability</li>
+                    <li><strong>Platform (Mario-like):</strong> 17.1% of changes break solvability</li>
+                    <li><strong>Crates (Sokoban-like):</strong> 78.9% of changes break solvability</li>
+                    <li><strong>Vertical (wall-jumping):</strong> 17.5% of changes break solvability</li>
+                </ul>
+                <p style="margin-top: 10px;">Compare this to CIFAR-10 or MNIST, where changing a single pixel almost <strong>never</strong> changes the true label of the image. This fundamental difference in data robustness is why we need specialized approaches for game level generation.</p>
+            </div>
+        </section>
+
+            <div class="note-box">
+                <h4>📊 Important Distinction</h4>
+                <p><strong>Robustness of Data vs. Robustness of Classifier:</strong></p>
+                <ul style="margin-left: 20px; margin-top: 10px;">
+                    <li><strong>Data Robustness:</strong> Whether the true label actually changes with input perturbation (our focus)</li>
+                    <li><strong>Classifier Robustness:</strong> Whether a model's prediction changes (traditional adversarial ML focus)</li>
+                </ul>
+                <p style="margin-top: 10px;">For game levels, the ground truth <em>should</em> change when critical tiles are modified - a robust classifier needs to capture this sensitivity!</p>
+            </div>
+        </section>
+
+        <!-- Section 4: Resources -->
+        <section id="resources">
+            <h2>4. Learn More</h2>
+            
+            <div class="links-grid">
+                <a href="#" class="link-card">
+                    <i class="fas fa-file-pdf"></i>
+                    <h4>Read Paper</h4>
+                    <p>Full FDG 2025 Paper</p>
+                </a>
+                
+                <a href="https://github.com/TheGGLC" class="link-card" target="_blank">
+                    <i class="fab fa-github"></i>
+                    <h4>GitHub</h4>
+                    <p>Dataset & Code</p>
+                </a>
+                
+                <a href="#" class="link-card">
+                    <i class="fas fa-video"></i>
+                    <h4>Video</h4>
+                    <p>Conference Presentation</p>
+                </a>
+                
+                <a href="#" class="link-card">
+                    <i class="fas fa-presentation-screen"></i>
+                    <h4>Slides</h4>
+                    <p>Presentation Deck</p>
+                </a>
+            </div>
+        </section>
+    </div>
+
+    <div class="tooltip" id="tooltip"></div>
+
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <script>
+        // Draw maze comparison example
+        function drawMazeComparison() {
+            const canvas = document.getElementById('maze-comparison');
+            const ctx = canvas.getContext('2d');
+            const tileSize = 10;
+            
+            // Simple maze - solvable
+            const solvableMaze = [
+                [1,1,1,1,1,1,1],
+                [1,2,0,0,1,0,1],
+                [1,1,1,0,1,0,1], // Key section: Open path (0) at [2,3]
+                [1,0,0,0,1,0,1],
+                [1,0,1,1,1,0,1],
+                [1,0,0,0,0,3,1],
+                [1,1,1,1,1,1,1]
+            ];
+            
+            // Draw solvable maze
+            ctx.fillStyle = '#333';
+            ctx.font = '11px Arial';
+            ctx.fillText('Solvable', 35, 12);
+            
+            for (let y = 0; y < solvableMaze.length; y++) {
+                for (let x = 0; x < solvableMaze[y].length; x++) {
+                    const tile = solvableMaze[y][x];
+                    if (tile === 1) ctx.fillStyle = '#4a4a4a';
+                    else if (tile === 2) ctx.fillStyle = '#4CAF50';
+                    else if (tile === 3) ctx.fillStyle = '#FFD700';
+                    else ctx.fillStyle = '#f8f9fa';
+                    
+                    ctx.fillRect(x * tileSize, y * tileSize + 20, tileSize - 1, tileSize - 1);
+                }
+            }
+            
+            // Draw path
+            ctx.strokeStyle = '#4CAF50';
+            ctx.lineWidth = 2;
+            ctx.setLineDash([2, 2]);
+            ctx.beginPath();
+            ctx.moveTo(10, 35);
+            ctx.lineTo(35, 35);
+            ctx.moveTo(35, 35);
+            ctx.lineTo(35, 55);
+            ctx.moveTo(35, 55);
+            ctx.lineTo(15, 55);
+            ctx.moveTo(15, 65);
+            ctx.lineTo(15, 55);
+            ctx.moveTo(15, 55);
+            ctx.lineTo(15, 75);
+            ctx.lineTo(55, 75);
+            ctx.stroke();
+            ctx.setLineDash([]);
+            
+            // Draw arrow
+            ctx.strokeStyle = '#667eea';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(90, 60);
+            ctx.lineTo(120, 60);
+            ctx.stroke();
+            
+            // Arrow head
+            ctx.beginPath();
+            ctx.moveTo(117, 55);
+            ctx.lineTo(125, 60);
+            ctx.lineTo(117, 65);
+            ctx.closePath();
+            ctx.fillStyle = '#667eea';
+            ctx.fill();
+            
+            // Draw "+" sign
+            ctx.fillStyle = '#dc2626';
+            ctx.font = '16px Arial';
+            ctx.fillText('+', 103, 45);
+            
+            // Unsolvable maze (with one extra wall)
+            ctx.fillStyle = '#333';
+            ctx.font = '11px Arial';
+            ctx.fillText('Unsolvable', 195, 12);
+            
+            const unsolvableMaze = [
+                [1,1,1,1,1,1,1],
+                [1,2,0,0,1,0,1],
+                [1,1,1,1,1,0,1], // *** THE ONLY CHANGE: [2,3] is now '1' (Wall) ***
+                [1,0,0,0,1,0,1],
+                [1,0,1,1,1,0,1],
+                [1,0,0,0,0,3,1],
+                [1,1,1,1,1,1,1]
+            ];
+            
+            for (let y = 0; y < unsolvableMaze.length; y++) {
+                for (let x = 0; x < unsolvableMaze[y].length; x++) {
+                    const tile = unsolvableMaze[y][x];
+                    // Highlight the changed tile
+                    if (tile === 1) {
+                        ctx.fillStyle = '#4a4a4a';
+                    } else if (tile === 2) {
+                        ctx.fillStyle = '#4CAF50';
+                    } else if (tile === 3) {
+                        ctx.fillStyle = '#FFD700';
+                    } else {
+                        ctx.fillStyle = '#f8f9fa';
+                    }
+                    
+                    ctx.fillRect(150 + x * tileSize, y * tileSize + 20, tileSize - 1, tileSize - 1);
+                }
+            }
+            
+            // Draw blocked path
+            ctx.strokeStyle = '#dc2626';
+            ctx.lineWidth = 2;
+            ctx.setLineDash([2, 2]);
+            ctx.beginPath();
+            ctx.lineTo(165, 35);
+            ctx.lineTo(185, 35);
+            ctx.lineTo(185, 40);
+            ctx.stroke();
+            ctx.setLineDash([]);
+            
+            // Draw X to show blocked
+            ctx.strokeStyle = '#dc2626';
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            ctx.moveTo(180, 40);
+            ctx.lineTo(190, 50);
+            ctx.moveTo(190, 40);
+            ctx.lineTo(180, 50);
+            ctx.stroke();
+            
+            // Add legend
+            ctx.fillStyle = '#666';
+            ctx.font = '10px Arial';
+            ctx.fillText('🟩 Start  🟨 Goal  ⬛ Wall', 80, 145);
+        }
+
+        // Initialize maze comparison
+        drawMazeComparison();
+
+        // Draw adversarial example comparison
+        function drawAdversarialExample() {
+            const canvas = document.getElementById('adversarial-demo');
+            const ctx = canvas.getContext('2d');
+            
+            // Draw original "panda" image (simplified representation)
+            ctx.fillStyle = '#f0f0f0';
+            ctx.fillRect(0, 0, 140, 150);
+            
+            // Draw a simple panda face
+            ctx.fillStyle = '#000';
+            // Ears
+            ctx.beginPath();
+            ctx.arc(40, 40, 15, 0, Math.PI * 2);
+            ctx.arc(100, 40, 15, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Head
+            ctx.fillStyle = '#fff';
+            ctx.beginPath();
+            ctx.arc(70, 70, 35, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Eyes
+            ctx.fillStyle = '#000';
+            ctx.beginPath();
+            ctx.arc(55, 65, 8, 0, Math.PI * 2);
+            ctx.arc(85, 65, 8, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Nose
+            ctx.beginPath();
+            ctx.arc(70, 80, 4, 0, Math.PI * 2);
+            ctx.fill();
+            
+            ctx.fillStyle = '#333';
+            ctx.font = '12px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText('Original', 70, 130);
+            ctx.fillText('🐼 Panda: 99%', 70, 145);
+            
+            // Draw arrow
+            ctx.strokeStyle = '#667eea';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(145, 75);
+            ctx.lineTo(155, 75);
+            ctx.stroke();
+            
+            // Arrow head
+            ctx.beginPath();
+            ctx.moveTo(152, 70);
+            ctx.lineTo(160, 75);
+            ctx.lineTo(152, 80);
+            ctx.closePath();
+            ctx.fillStyle = '#667eea';
+            ctx.fill();
+            
+            // Draw "adversarial" version with noise
+            ctx.fillStyle = '#f0f0f0';
+            ctx.fillRect(160, 0, 140, 150);
+            
+            // Add some noise pixels
+            for(let i = 0; i < 100; i++) {
+                ctx.fillStyle = `rgba(${Math.random()*100}, ${Math.random()*100}, ${Math.random()*100}, 0.2)`;
+                ctx.fillRect(160 + Math.random()*140, Math.random()*110, 2, 2);
+            }
+            
+            // Draw same panda (showing it's still recognizable)
+            ctx.fillStyle = '#000';
+            // Ears
+            ctx.beginPath();
+            ctx.arc(200, 40, 15, 0, Math.PI * 2);
+            ctx.arc(260, 40, 15, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Head
+            ctx.fillStyle = '#fff';
+            ctx.beginPath();
+            ctx.arc(230, 70, 35, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Eyes
+            ctx.fillStyle = '#000';
+            ctx.beginPath();
+            ctx.arc(215, 65, 8, 0, Math.PI * 2);
+            ctx.arc(245, 65, 8, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Nose
+            ctx.beginPath();
+            ctx.arc(230, 80, 4, 0, Math.PI * 2);
+            ctx.fill();
+            
+            ctx.fillStyle = '#333';
+            ctx.font = '12px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText('+ Adversarial Noise', 230, 130);
+            ctx.fillText('🦒 "Gibbon": 99%', 230, 145);
+        }
+
+        // Initialize adversarial example
+        drawAdversarialExample();
+
+        // Game level data and visualization code
+        const TILE_TYPES = {
+            EMPTY: 0,
+            WALL: 1,
+            PLAYER: 2,
+            GOAL: 3,
+            KEY: 4,
+            DOOR: 5,
+            CRATE: 6,
+            CRATE_GOAL: 7,
+            PLATFORM: 8,
+            SPIKE: 9
+        };
+
+        const TILE_COLORS = {
+            [TILE_TYPES.EMPTY]: '#f8f9fa',
+            [TILE_TYPES.WALL]: '#4a4a4a',
+            [TILE_TYPES.PLAYER]: '#4CAF50',
+            [TILE_TYPES.GOAL]: '#FFD700',
+            [TILE_TYPES.KEY]: '#FF6B6B',
+            [TILE_TYPES.DOOR]: '#8B4513',
+            [TILE_TYPES.CRATE]: '#CD853F',
+            [TILE_TYPES.CRATE_GOAL]: '#FFA500',
+            [TILE_TYPES.PLATFORM]: '#8B7355',
+            [TILE_TYPES.SPIKE]: '#DC143C'
+        };
+
+        // Sample levels - now platformer levels
+        const solvableLevel = [
+            [0,0,0,0,0,0,0,0,0,0],
+            [0,0,0,0,0,0,0,0,3,0],
+            [0,0,0,0,0,0,0,8,8,8],
+            [0,0,0,0,0,0,0,0,0,0],
+            [0,0,0,0,0,8,0,0,0,0],
+            [0,0,0,0,0,0,0,0,0,0],
+            [0,0,0,0,8,0,0,0,0,0],
+            [0,0,0,0,0,0,0,0,0,0],
+            [2,0,8,0,0,0,0,0,0,0],
+            [8,8,8,0,0,0,0,0,0,0]
+        ];
+
+        const unsolvableLevel = [
+            [0,0,0,0,0,0,0,0,0,0],
+            [0,0,0,0,0,0,0,0,3,0],
+            [0,0,0,0,0,0,0,8,8,8],
+            [0,0,0,0,0,0,0,0,0,0],
+            [0,0,0,0,0,0,0,0,0,0],  // Removed platform tile here
+            [0,0,0,0,0,0,0,0,0,0],
+            [0,0,0,0,8,0,0,0,0,0],
+            [0,0,0,0,0,0,0,0,0,0],
+            [2,0,8,0,0,0,0,0,0,0],
+            [8,8,8,0,0,0,0,0,0,0]
+        ];
+
+        const solvablePath = [
+            {x: 0, y: 8, jumping: false},
+            {x: 2, y: 8, jumping: true},
+            {x: 3, y: 6, jumping: false},
+            {x: 4, y: 6, jumping: true},
+            {x: 4.5, y: 4, jumping: false},
+            {x: 5, y: 4, jumping: true},
+            {x: 6, y: 2, jumping: false},
+            {x: 7, y: 2, jumping: true},
+            {x: 8, y: 1, jumping: false},
+        ];
+
+        const unsolvablePath = [
+            {x: 0, y: 8, jumping: false},
+            {x: 2, y: 8, jumping: true},
+            {x: 3, y: 6, jumping: false},
+            {x: 4, y: 6, jumping: true},
+            {x: 4, y: 7, jumping: false, falling: true},
+            {x: 4, y: 8, jumping: false, falling: true},
+            {x: 4, y: 9, jumping: false, stuck: false},
+            {x: 4, y: 10, jumping: false, stuck: true}
+        ];
+
+        class LevelVisualizer {
+            constructor(canvasId, levelData, path) {
+                this.canvas = document.getElementById(canvasId);
+                this.ctx = this.canvas.getContext('2d');
+                this.level = levelData;
+                this.path = path;
+                this.tileSize = 32;
+                this.currentPathIndex = -1;
+                this.animating = false;
+            }
+
+            draw() {
+                this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+                
+                // Draw sky gradient
+                const gradient = this.ctx.createLinearGradient(0, 0, 0, this.canvas.height);
+                gradient.addColorStop(0, '#87CEEB');
+                gradient.addColorStop(1, '#98D8E8');
+                this.ctx.fillStyle = gradient;
+                this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+                
+                // Draw tiles
+                for (let y = 0; y < this.level.length; y++) {
+                    for (let x = 0; x < this.level[y].length; x++) {
+                        const tile = this.level[y][x];
+                        
+                        if (tile === TILE_TYPES.PLATFORM || tile === TILE_TYPES.WALL) {
+                            // Draw platform with grass on top
+                            this.ctx.fillStyle = '#8B4513';
+                            this.ctx.fillRect(x * this.tileSize, y * this.tileSize, 
+                                            this.tileSize, this.tileSize);
+                            this.ctx.fillStyle = '#228B22';
+                            this.ctx.fillRect(x * this.tileSize, y * this.tileSize, 
+                                            this.tileSize, 4);
+                        } else if (tile === TILE_TYPES.PLAYER) {
+                            // FIX: Adjust the Y coordinate UP by half a tile size (this.tileSize / 2).
+                            // This ensures the player is standing on the tile surface, 
+                            // not centered in the tile space.
+                            if (!this.animating) {
+                                this.drawPlayer(x * this.tileSize, y * this.tileSize + this.tileSize / 4);
+                            }
+                        } else if (tile === TILE_TYPES.GOAL) {
+                            this.drawGoal(x * this.tileSize, y * this.tileSize);
+                        }
+                    }
+                }
+                
+                // Draw path if animating
+                if (this.currentPathIndex >= 0 && this.path.length > 0) {
+                    const currentPos = this.path[Math.min(this.currentPathIndex, this.path.length - 1)];
+                    
+                    // Draw jumping arcs
+                    this.ctx.strokeStyle = '#667eea';
+                    this.ctx.lineWidth = 2;
+                    this.ctx.setLineDash([4, 4]);
+                    this.ctx.beginPath();
+                    
+                    for (let i = 0; i <= Math.min(this.currentPathIndex, this.path.length - 1); i++) {
+                        const point = this.path[i];
+                        const x = point.x * this.tileSize + this.tileSize / 2;
+                        const y = point.y * this.tileSize;
+                        
+                        if (i === 0) {
+                            this.ctx.moveTo(x, y);
+                        } else {
+                            const prevPoint = this.path[i - 1];
+                            if (point.jumping) {
+                                // Draw arc for jump - use the new y for prevY and midY calculations
+                                const prevX = prevPoint.x * this.tileSize + this.tileSize / 2;
+                                const prevY = prevPoint.y * this.tileSize; // FIXED Y
+                                const midX = (prevX + x) / 2;
+                                const midY = Math.min(prevY, y) - 20;
+                                this.ctx.quadraticCurveTo(midX, midY, x, y);
+                            } else {
+                                this.ctx.lineTo(x, y);
+                            }
+                        }
+                    }
+                    this.ctx.stroke();
+                    this.ctx.setLineDash([]);
+                    
+                    // Draw character at current position
+                    this.drawPlayer(currentPos.x * this.tileSize, 
+                                currentPos.y * this.tileSize - this.tileSize / 2, // FIX 2: Shift Y up by half a tile size
+                                currentPos.stuck, currentPos.falling);
+                }
+            }
+
+            drawPlayer(x, y, stuck = false, falling = false) {
+                this.ctx.fillStyle = stuck ? '#FF6B6B' : '#4CAF50';
+                this.ctx.fillRect(x + 8, y + 8, 16, 16);
+                this.ctx.fillStyle = 'white';
+                this.ctx.font = '12px Arial';
+                this.ctx.textAlign = 'center';
+                this.ctx.textBaseline = 'middle';
+                const emoji = stuck ? '😵' : (falling ? '😰' : '😊');
+                this.ctx.fillText(emoji, x + this.tileSize/2, y + this.tileSize/2);
+            }
+
+            drawGoal(x, y) {
+                // Draw flag pole
+                this.ctx.fillStyle = '#8B4513';
+                this.ctx.fillRect(x + 14, y + 8, 4, 20);
+                // Draw flag
+                this.ctx.fillStyle = '#FF0000';
+                this.ctx.beginPath();
+                this.ctx.moveTo(x + 18, y + 8);
+                this.ctx.lineTo(x + 30, y + 14);
+                this.ctx.lineTo(x + 18, y + 20);
+                this.ctx.closePath();
+                this.ctx.fill();
+            }
+
+            animatePath() {
+                if (this.animating) return;
+                this.animating = true;
+                this.currentPathIndex = -1;
+                
+                const animate = () => {
+                    if (this.currentPathIndex < this.path.length - 1) {
+                        this.currentPathIndex++;
+                        this.draw();
+                        setTimeout(() => animate(), 400);
+                    } else {
+                        this.animating = false;
+                    }
+                };
+                animate();
+            }
+
+            reset() {
+                this.currentPathIndex = -1;
+                this.animating = false;
+                this.draw();
+            }
+        }
+
+        // Initialize level visualizers
+        const solvableViz = new LevelVisualizer('solvable-level', solvableLevel, solvablePath);
+        const unsolvableViz = new LevelVisualizer('unsolvable-level', unsolvableLevel, unsolvablePath);
+
+        solvableViz.draw();
+        unsolvableViz.draw();
+
+        // Button handlers
+        document.getElementById('play-solvable').addEventListener('click', () => {
+            solvableViz.animatePath();
+        });
+
+        document.getElementById('reset-solvable').addEventListener('click', () => {
+            solvableViz.reset();
+        });
+
+        document.getElementById('play-unsolvable').addEventListener('click', () => {
+            unsolvableViz.animatePath();
+        });
+
+        document.getElementById('reset-unsolvable').addEventListener('click', () => {
+            unsolvableViz.reset();
+        });
+
+        // Draw mini game demos
+        function drawMiniGame(canvasId, gameType) {
+            const canvas = document.getElementById(canvasId);
+            const ctx = canvas.getContext('2d');
+            const tileSize = 20;
+            
+            // Simple representations for each game
+            const games = {
+                'cave': [
+                    [1,1,1,1,1,1,1,1,1,1],
+                    [1,0,0,1,0,0,0,0,3,1],
+                    [1,1,0,1,0,1,1,1,0,1],
+                    [1,0,0,0,0,0,0,1,0,1],
+                    [1,0,1,1,1,1,0,1,0,1],
+                    [1,0,0,0,0,0,0,0,0,1],
+                    [1,1,0,1,1,1,1,1,0,1],
+                    [1,2,0,0,0,0,0,0,0,1],
+                    [1,1,1,0,0,4,0,0,0,1],
+                    [1,1,1,1,1,1,1,1,1,1]
+                ],
+                'platform': [
+                    [0,0,0,0,0,0,0,0,0,0],
+                    [0,0,0,0,0,0,0,0,3,0],
+                    [0,0,0,0,0,8,8,8,8,8],
+                    [0,0,0,8,8,0,0,0,0,0],
+                    [0,0,0,0,0,0,0,0,0,0],
+                    [0,8,8,0,0,0,0,0,0,0],
+                    [0,0,0,0,0,8,8,0,0,0],
+                    [0,0,0,0,0,0,0,0,0,0],
+                    [8,8,8,0,0,0,0,0,8,8],
+                    [2,0,0,0,9,9,0,0,0,0]
+                ],
+                'crates': [
+                    [1,1,1,1,1,1,1,1,1,1],
+                    [1,0,0,0,0,0,0,0,0,1],
+                    [1,0,2,0,0,0,0,0,0,1],
+                    [1,0,0,6,0,0,0,0,0,1],
+                    [1,0,0,0,0,7,0,0,0,1],
+                    [1,0,0,0,0,0,0,6,0,1],
+                    [1,0,0,0,7,0,0,0,0,1],
+                    [1,0,0,0,0,0,0,0,0,1],
+                    [1,0,0,0,0,0,0,0,0,1],
+                    [1,1,1,1,1,1,1,1,1,1]
+                ],
+                'vertical': [
+                    [0,0,0,1,0,0,1,0,0,0],
+                    [0,0,0,1,3,0,1,0,0,0],
+                    [0,0,0,1,8,8,1,0,0,0],
+                    [0,0,0,1,0,0,1,0,0,0],
+                    [0,0,8,8,0,0,8,8,0,0],
+                    [0,0,0,1,0,0,1,0,0,0],
+                    [0,8,8,1,0,0,1,8,8,0],
+                    [0,0,0,1,0,0,1,0,0,0],
+                    [8,8,8,1,0,0,1,8,8,8],
+                    [2,0,0,0,0,0,0,0,0,0]
+                ]
+            };
+            
+            const level = games[gameType];
+            
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            for (let y = 0; y < level.length; y++) {
+                for (let x = 0; x < level[y].length; x++) {
+                    const tile = level[y][x];
+                    ctx.fillStyle = TILE_COLORS[tile];
+                    ctx.fillRect(x * tileSize, y * tileSize, tileSize - 1, tileSize - 1);
+                }
+            }
+        }
+
+        // Initialize mini game demos
+        // drawMiniGame('cave-demo', 'cave');
+        // drawMiniGame('platform-demo', 'platform');
+        // drawMiniGame('crates-demo', 'crates');
+        // drawMiniGame('vertical-demo', 'vertical');
+
+        // Placeholder for game playing
+        function playGame(gameType) {
+            alert(`Interactive ${gameType} game would load here. In the full implementation, this would be a playable mini-game!`);
+        }
+
+        // Robustness plot
+        const radiusSlider = document.getElementById('radius-slider');
+        const radiusValue = document.getElementById('radius-value');
+
+        function updateRobustnessPlot(radius) {
+            const radiusVal = radius / 1000;
+            radiusValue.textContent = radiusVal.toFixed(3);
+            
+            // Data from the paper's Table 3
+            const datasets = ['CIFAR-10', 'MNIST', 'Cave', 'Platform', 'Crates', 'Vertical'];
+            const robustnessData = {
+                'CIFAR-10': [0, 0, 0.1, 2.9, 6.7, 12.4, 12.8, 14.4, 18.9],
+                'MNIST': [0, 0, 0.1, 1.6, 3.7, 5.8, 6.2, 6.1, 10.1],
+                'Cave': [0, 0.7, 2.3, 24.3, 29.6, 32.6, 32.6, 35.2, 36.2],
+                'Platform': [0, 0, 0, 2.0, 5.9, 12.5, 14.1, 21.2, 28.1],
+                'Crates': [0, 0, 0.3, 2.5, 6.0, 13.1, 15.3, 20.8, 25.8],
+                'Vertical': [0, 0, 0.1, 1.1, 3.2, 5.6, 6.7, 10.3, 15.9]
+            };
+            
+            const radiusValues = [0.00001, 0.00005, 0.0001, 0.0005, 0.001, 0.005, 0.01, 0.05, 0.1];
+            
+            // Find the closest radius index
+            let idx = 0;
+            for (let i = 0; i < radiusValues.length; i++) {
+                if (radiusVal <= radiusValues[i]) {
+                    idx = i;
+                    break;
+                }
+                idx = i;
+            }
+            
+            const traces = datasets.map(dataset => ({
+                x: radiusValues,
+                y: robustnessData[dataset],
+                type: 'scatter',
+                mode: 'lines+markers',
+                name: dataset,
+                line: {
+                    width: dataset.includes('Cave') || dataset.includes('Platform') || 
+                           dataset.includes('Crates') || dataset.includes('Vertical') ? 3 : 2
+                }
+            }));
+            
+            // Add vertical line for current radius
+            traces.push({
+                x: [radiusVal, radiusVal],
+                y: [0, 40],
+                type: 'scatter',
+                mode: 'lines',
+                name: 'Current Radius',
+                line: {
+                    color: 'rgba(255, 0, 0, 0.5)',
+                    width: 2,
+                    dash: 'dash'
+                },
+                showlegend: false
+            });
+            
+            const layout = {
+                title: 'Non-Robustness Comparison (Higher = More Sensitive)',
+                xaxis: {
+                    title: 'Radius (r)',
+                    type: 'log',
+                    range: [-5, -0.5]
+                },
+                yaxis: {
+                    title: 'Non-Robustness (%)',
+                    range: [0, 40]
+                },
+                legend: {
+                    x: 0.02,
+                    y: 0.98
+                },
+                hovermode: 'x unified'
+            };
+            
+            Plotly.newPlot('robustness-plot', traces, layout, {responsive: true});
+        }
+
+        radiusSlider.addEventListener('input', (e) => {
+            updateRobustnessPlot(e.target.value);
+        });
+
+        // Initialize robustness plot
+        updateRobustnessPlot(10);
+
+        // Embedding visualization
+        function createEmbeddingPlot() {
+            // Simulated UMAP embeddings for demonstration
+            const numPoints = 200;
+            const data = [];
+            
+            // Generate clusters for each game type
+            const games = ['Cave', 'Platform', 'Crates', 'Vertical'];
+            const centers = [
+                {x: -5, y: 5}, {x: 5, y: 5}, {x: -5, y: -5}, {x: 5, y: -5}
+            ];
+            
+            games.forEach((game, i) => {
+                for (let j = 0; j < numPoints/4; j++) {
+                    const solvable = Math.random() > 0.3;
+                    const x = centers[i].x + (Math.random() - 0.5) * 4;
+                    const y = centers[i].y + (Math.random() - 0.5) * 4;
+                    
+                    data.push({
+                        x: x,
+                        y: y,
+                        game: game,
+                        solvable: solvable,
+                        color: solvable ? 'blue' : 'red',
+                        text: `${game} - ${solvable ? 'Solvable' : 'Unsolvable'}`
+                    });
+                }
+            });
+            
+            const solvableData = data.filter(d => d.solvable);
+            const unsolvableData = data.filter(d => !d.solvable);
+            
+            const trace1 = {
+                x: solvableData.map(d => d.x),
+                y: solvableData.map(d => d.y),
+                mode: 'markers',
+                type: 'scatter',
+                name: 'Solvable',
+                text: solvableData.map(d => d.text),
+                marker: {
+                    size: 8,
+                    color: '#4CAF50',
+                    opacity: 0.6
+                }
+            };
+            
+            const trace2 = {
+                x: unsolvableData.map(d => d.x),
+                y: unsolvableData.map(d => d.y),
+                mode: 'markers',
+                type: 'scatter',
+                name: 'Unsolvable',
+                text: unsolvableData.map(d => d.text),
+                marker: {
+                    size: 8,
+                    color: '#f44336',
+                    opacity: 0.6
+                }
+            };
+            
+            const layout = {
+                title: 'UMAP Embedding of Game Levels (CLIP Features)',
+                xaxis: {
+                    title: 'UMAP Dimension 1',
+                    zeroline: false
+                },
+                yaxis: {
+                    title: 'UMAP Dimension 2',
+                    zeroline: false
+                },
+                hovermode: 'closest',
+                showlegend: true
+            };
+            
+            Plotly.newPlot('embedding-plot', [trace1, trace2], layout, {responsive: true});
+        }
+
+        // Initialize embedding plot
+        createEmbeddingPlot();
+
+        // Add smooth scrolling for better UX
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                }
+            });
+        });
+    </script>
+</body>
+</html>

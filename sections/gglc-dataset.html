@@ -1,0 +1,54 @@
+<!-- Section 2: The GGLC Dataset -->
+<section id="gglc-dataset">
+    <h2>2. The Generated Game Level Corpus (GGLC)</h2>
+    
+    <h3>Why We Created It</h3>
+    <p>Existing game level datasets are small (typically hundreds of levels) and often copyrighted. We needed a large, diverse, and freely available dataset to study the unique challenges of game level generation.</p>
+    
+    <h3>How We Generate Levels: The Sturgeon Engine</h3>
+    <p>We use <strong>Sturgeon</strong>, a constraint-based level generator that ensures both local patterns (like proper pipe connections) and global constraints (like solvability).</p>
+    
+    <div class="code-snippet">
+        <strong>Sturgeon Generation Process:</strong><br>
+        1. Define tile patterns from example levels<br>
+        2. Set global constraints (start → goal path must exist)<br>
+        3. Set local constraints (structural patterns)<br>
+        4. Use SAT/SMT solvers to find valid solutions<br>
+        5. Verify solvability through pathfinding or playthrough simulation
+    </div>
+
+    <h3>Our Games Collection</h3>
+    <div class="game-grid">
+        <div class="game-card">
+            <h4>🗿 Cave</h4>
+            <canvas id="cave-demo" class="level-canvas" width="200" height="200"></canvas>
+            <p>Top-down maze navigation with keys and doors</p>
+            <p><strong>60,000+ levels</strong></p>
+            <button onclick="playGame('cave')">Play Demo</button>
+        </div>
+        
+        <div class="game-card">
+            <h4>🏃 Platform</h4>
+            <canvas id="platform-demo" class="level-canvas" width="200" height="200"></canvas>
+            <p>Mario-inspired platformer with jumps</p>
+            <p><strong>10,000+ levels</strong></p>
+            <button onclick="playGame('platform')">Play Demo</button>
+        </div>
+        
+        <div class="game-card">
+            <h4>📦 Crates</h4>
+            <canvas id="crates-demo" class="level-canvas" width="200" height="200"></canvas>
+            <p>Sokoban-style puzzle pushing boxes</p>
+            <p><strong>10,000+ levels</strong></p>
+            <button onclick="playGame('crates')">Play Demo</button>
+        </div>
+        
+        <div class="game-card">
+            <h4>🐱 Vertical</h4>
+            <canvas id="vertical-demo" class="level-canvas" width="200" height="200"></canvas>
+            <p>Vertical platformer with wall climbing</p>
+            <p><strong>10,000+ levels</strong></p>
+            <button onclick="playGame('vertical')">Play Demo</button>
+        </div>
+    </div>
+</section>

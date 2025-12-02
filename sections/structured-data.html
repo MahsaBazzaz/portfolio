@@ -1,0 +1,120 @@
+<!-- Section 1: Structured Discrete Data -->
+<section id="structured-data">
+    <h2>1. The Fragility of Structured Discrete Data</h2>
+    
+    <p><strong>"Bad data"</strong> often arises when real-world information fails to conform to predefined rules or constraints, causing breakdowns in how that information is processed and interpreted. In the case of highly structured discrete data, these constraints can be especially unforgiving: even a minor deviation from expected formats can cause complete failure.</p>
+
+    <h3>The Fundamental Difference: Pixels vs. Tiles</h3>
+    
+    <p>Consider how differently various data types respond to small changes:</p>
+
+    <div class="comparison-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px; margin: 30px 0;">
+        <div class="comparison-box" style="padding: 20px; background: #f0f7ff; border-radius: 8px;">
+            <h4 style="color: #2563eb; margin-bottom: 15px;">📷 Traditional Images (CIFAR-10, ImageNet)</h4>
+            <div style="background: white; padding: 15px; border-radius: 4px; margin-bottom: 15px;">
+                <canvas id="adversarial-demo" width="300" height="150"></canvas>
+                <p style="font-size: 0.9em; color: #666; margin-top: 10px; text-align: center;">
+                    Even with carefully crafted adversarial noise affecting <strong>thousands of pixels</strong>,<br>
+                    a panda is still recognizably a panda to humans
+                </p>
+            </div>
+            <ul style="list-style: none; padding: 0;">
+                <li>✓ <strong>Pixel</strong>: Smallest visual element (1/65,536 in a 256×256 image)</li>
+                <li>✓ <strong>Redundancy</strong>: Adjacent pixels often similar</li>
+                <li>✓ <strong>Continuity</strong>: Small changes → small effects</li>
+                <li>✓ <strong>Human perception</strong>: Robust to noise</li>
+            </ul>
+        </div>
+
+        <div class="comparison-box" style="padding: 20px; background: #fef3f2; border-radius: 8px;">
+            <h4 style="color: #dc2626; margin-bottom: 15px;">🎮 Game Levels (Structured Discrete)</h4>
+            <div style="background: white; padding: 15px; border-radius: 4px; margin-bottom: 15px;">
+                <p style="text-align: center; font-size: 1.2em;">🧱 → ❌</p>
+                <p style="font-size: 0.9em; color: #666; margin-top: 10px; text-align: center;">
+                    Changing <strong>just one tile</strong> (1/256 in a 16×16 level)<br>
+                    can make an entire level uncompletable
+                </p>
+            </div>
+            <ul style="list-style: none; padding: 0;">
+                <li>✗ <strong>Tile</strong>: Functional building block with gameplay mechanics</li>
+                <li>✗ <strong>Constraints</strong>: Each tile must satisfy local & global rules</li>
+                <li>✗ <strong>Brittleness</strong>: Small changes → catastrophic effects</li>
+                <li>✗ <strong>Binary outcome</strong>: Solvable or not (no gradient)</li>
+            </ul>
+        </div>
+    </div>
+
+    <p>This distinction is crucial. In game levels, a <strong>"tile"</strong> is the smallest building block that constructs both the visual and functional layout of a game's environment, with each tile corresponding to specific gameplay mechanics or aesthetics (walls block movement, keys unlock doors, spikes harm the player). Unlike pixels in images, tiles have <strong>semantic meaning and mechanical function</strong>.</p>
+
+    <h3>Hard Constraints vs. Soft Constraints</h3>
+    
+    <p>The term <strong>"hard constraint"</strong> originates from constraint satisfaction problems (CSP). In this context:</p>
+    
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin: 20px 0;">
+        <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; border-left: 4px solid #28a745;">
+            <strong>Hard Constraints</strong>: MUST be satisfied
+            <ul style="margin-top: 10px; margin-left: 20px;">
+                <li>Level must have path from start to goal</li>
+                <li>Every key must have a corresponding door</li>
+                <li>Player spawn point must be on solid ground</li>
+                <li>No floating platforms (physics consistency)</li>
+            </ul>
+        </div>
+        <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; border-left: 4px solid #ffc107;">
+            <strong>Soft Constraints</strong>: PREFERABLY satisfied
+            <ul style="margin-top: 10px; margin-left: 20px;">
+                <li>Aesthetic preferences (symmetry)</li>
+                <li>Difficulty targets</li>
+                <li>Pacing considerations</li>
+                <li>Style consistency</li>
+            </ul>
+        </div>
+    </div>
+
+    <h3>When One Tile Changes Everything</h3>
+    
+    <p>Let's see this brittleness in action. Below are two cave levels that differ by <strong>exactly one tile</strong>. Click "Play Solution" to watch the path animation and see how this single change completely breaks the level's solvability:</p>
+    
+    <div class="demo-container">
+        <div class="demo-box">
+            <h4>✅ Solvable Level</h4>
+            <canvas id="solvable-level" class="level-canvas" width="320" height="320"></canvas>
+            <div class="controls">
+                <button id="play-solvable">▶ Play Solution</button>
+                <button id="reset-solvable">↻ Reset</button>
+            </div>
+            <div class="status solvable">Player can reach the goal!</div>
+            <p style="font-size: 0.85em; color: #666; margin-top: 10px;">
+                Original level with clear path from start (😊) to goal (🎯)
+            </p>
+        </div>
+        
+        <div class="demo-box">
+            <h4>❌ One Tile Changed</h4>
+            <canvas id="unsolvable-level" class="level-canvas" width="320" height="320"></canvas>
+            <div class="controls">
+                <button id="play-unsolvable">▶ Try Solution</button>
+                <button id="reset-unsolvable">↻ Reset</button>
+            </div>
+            <div class="status unsolvable">Path blocked - Level unsolvable!</div>
+            <p style="font-size: 0.85em; color: #666; margin-top: 10px;">
+                Single wall tile added at position (7,7) - <strong>0.01% change, 100% broken</strong>
+            </p>
+        </div>
+    </div>
+
+    <h3>Why This Matters for Machine Learning</h3>
+    
+    <p>This extreme sensitivity creates unique challenges for procedural content generation via machine learning (PCGML):</p>
+    
+    <ol style="margin-left: 20px; line-height: 1.8;">
+        <li><strong>Gradient-based learning struggles</strong>: The discrete nature and binary outcomes (solvable/unsolvable) make it difficult to backpropagate meaningful gradients through neural networks.</li>
+        
+        <li><strong>No tolerance for errors</strong>: Unlike image generation where slight imperfections are acceptable, a single misplaced tile can render a level unplayable. Even state-of-the-art models like transformers, VAEs, and GANs frequently generate levels with broken local structures (pipes that don't connect, floating platforms, inaccessible areas).</li>
+        
+        <li><strong>Evaluation is binary and expensive</strong>: Determining if a level is solvable requires running pathfinding algorithms or physics simulations - you can't just "look at it" like an image.</li>
+        
+        <li><strong>Training data is sparse</strong>: Unlike millions of images available for computer vision, game level datasets typically contain only hundreds to thousands of examples, making it harder to learn these complex constraints.</li>
+    </ol>
+    
+</section>
