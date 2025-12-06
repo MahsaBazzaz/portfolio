@@ -200,7 +200,7 @@
         
         .links-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
             gap: 20px;
             margin: 30px 0;
         }
@@ -288,7 +288,7 @@
             
             <p><strong>"Bad data"</strong> often arises when real-world information fails to conform to predefined rules or constraints, causing breakdowns in how that information is processed and interpreted. In the case of highly structured discrete data, these constraints can be especially unforgiving: even a minor deviation from expected formats can cause complete failure.</p>
 
-            <h3>The Fundamental Difference: Pixels vs. Tiles</h3>
+            <h3>Sensitivity to small changes in different data types</h3>
             
             <p>Consider how differently various data types respond to small changes:</p>
 
@@ -330,32 +330,74 @@
 
             <p>This distinction is crucial. In game levels, a <strong>"tile"</strong> is the smallest building block that constructs both the visual and functional layout of a game's environment, with each tile corresponding to specific gameplay mechanics or aesthetics (walls block movement, keys unlock doors, spikes harm the player). Unlike pixels in images, tiles have <strong>semantic meaning and mechanical function</strong>.</p>
 
-            <h3>Hard Constraints vs. Soft Constraints</h3>
+            <h3>Understanding Constraints in Structured Data</h3>
             
-            <p>The term <strong>"hard constraint"</strong> originates from constraint satisfaction problems (CSP). In this context:</p>
-            
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin: 20px 0;">
-                <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; border-left: 4px solid #28a745;">
-                    <strong>Hard Constraints</strong>: MUST be satisfied
-                    <ul style="margin-top: 10px; margin-left: 20px;">
-                        <li>Level must have path from start to goal</li>
-                        <li>Every key must have a corresponding door</li>
-                        <li>Player spawn point must be on solid ground</li>
-                        <li>No floating platforms (physics consistency)</li>
-                    </ul>
+            <p>Structured discrete data, whether game levels or other domains, must satisfy various types of constraints. Understanding these constraints is crucial for developing effective generation models:</p>
+
+            <div style="background: #f0f4f8; padding: 25px; border-radius: 12px; margin: 20px 0;">
+                <h4 style="color: #1e40af; margin-bottom: 20px;">🎯 Types of Constraints</h4>
+                
+                <!-- Hard vs Soft Constraints -->
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 25px;">
+                    <div style="background: white; padding: 20px; border-radius: 8px; border-left: 4px solid #28a745;">
+                        <h5 style="color: #28a745; margin-bottom: 15px;">✓ Hard Constraints</h5>
+                        <p style="margin: 0; color: #495057;">
+                            <strong>Definition:</strong> Mandatory conditions that MUST be satisfied for validity. Violation means complete failure.
+                        </p>
+                        <p style="margin: 10px 0 0 0; font-size: 0.9em; color: #6c757d;">
+                            In constraint satisfaction problems (CSP), these are non-negotiable requirements that cannot be relaxed.
+                        </p>
+                    </div>
+                    
+                    <div style="background: white; padding: 20px; border-radius: 8px; border-left: 4px solid #ffc107;">
+                        <h5 style="color: #f57c00; margin-bottom: 15px;">~ Soft Constraints</h5>
+                        <p style="margin: 0; color: #495057;">
+                            <strong>Definition:</strong> Preferred conditions that SHOULD be satisfied for quality. Violation reduces desirability but not validity.
+                        </p>
+                        <p style="margin: 10px 0 0 0; font-size: 0.9em; color: #6c757d;">
+                            These can be treated as optimization objectives with penalties proportional to violation degree.
+                        </p>
+                    </div>
                 </div>
-                <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; border-left: 4px solid #ffc107;">
-                    <strong>Soft Constraints</strong>: PREFERABLY satisfied
-                    <ul style="margin-top: 10px; margin-left: 20px;">
-                        <li>Aesthetic preferences (symmetry)</li>
-                        <li>Difficulty targets</li>
-                        <li>Pacing considerations</li>
-                        <li>Style consistency</li>
+
+                <!-- Local vs Global Constraints -->
+                <h4 style="color: #1e40af; margin: 25px 0 20px 0;">📍 Scope of Constraints</h4>
+                
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                    <div style="background: white; padding: 20px; border-radius: 8px; border-left: 4px solid #9333ea;">
+                        <h5 style="color: #7c3aed; margin-bottom: 15px;">🔍 Local Constraints</h5>
+                        <p style="margin: 0; color: #495057;">
+                            <strong>Definition:</strong> Rules governing relationships between neighboring or nearby elements.
+                        </p>
+                        <p style="margin: 10px 0 0 0; font-size: 0.9em; color: #6c757d;">
+                            These ensure proper patterns and connections at the micro-level, affecting small regions of the structure.
+                        </p>
+                    </div>
+                    
+                    <div style="background: white; padding: 20px; border-radius: 8px; border-left: 4px solid #0ea5e9;">
+                        <h5 style="color: #0284c7; margin-bottom: 15px;">🌐 Global Constraints</h5>
+                        <p style="margin: 0; color: #495057;">
+                            <strong>Definition:</strong> Rules governing properties of the entire structure as a whole.
+                        </p>
+                        <p style="margin: 10px 0 0 0; font-size: 0.9em; color: #6c757d;">
+                            These ensure overall correctness and completeness, requiring analysis of the full structure to verify.
+                        </p>
+                    </div>
+                </div>
+                
+                <div class="note-box" style="margin-top: 20px; background: #fef3c7; border-left-color: #f59e0b;">
+                    <h4 style="color: #d97706;">🔄 The Interaction Effect</h4>
+                    <p style="margin-bottom: 10px;">These constraint dimensions combine to create four distinct categories:</p>
+                    <ul style="margin-left: 20px;">
+                        <li><strong>Hard + Local:</strong> Solid ground tiles must exist under the player spawn point</li>
+                        <li><strong>Hard + Global:</strong> Level must be solvable from start to goal</li>
+                        <li><strong>Soft + Local:</strong> Decorative elements should follow aesthetic patterns</li>
+                        <li><strong>Soft + Global:</strong> Overall difficulty should progress smoothly</li>
                     </ul>
                 </div>
             </div>
 
-            <h3>Local Constraints: When Structures Break</h3>
+            <h3>When Local Constraints Break: Visual Examples</h3>
             
             <p>Beyond global solvability, game levels must also satisfy <strong>local constraints</strong> - structural patterns that ensure visual and functional coherence. Even state-of-the-art models frequently violate these, producing "broken" content that looks wrong even if technically solvable:</p>
 
@@ -559,14 +601,14 @@
                 <h4>💡 Key Finding from Our Research</h4>
                 <p>We measured the <strong>non-robustness</strong> of different game types when subjected to single-tile changes:</p>
                 <ul style="margin: 10px 0 0 20px;">
-                    <li><strong>Cave (maze-like):</strong> 43.1% of changes break solvability</li>
-                    <li><strong>Platform (Mario-like):</strong> 17.1% of changes break solvability</li>
-                    <li><strong>Crates (Sokoban-like):</strong> 78.9% of changes break solvability</li>
-                    <li><strong>Vertical (wall-jumping):</strong> 17.5% of changes break solvability</li>
+                    <li><strong>Cave:</strong> 43.1% of changes break solvability</li>
+                    <li><strong>Platform:</strong> 17.1% of changes break solvability</li>
+                    <li><strong>Crates:</strong> 78.9% of changes break solvability</li>
+                    <li><strong>Vertical:</strong> 17.5% of changes break solvability</li>
                 </ul>
                 <p style="margin-top: 10px;">Compare this to CIFAR-10 or MNIST, where changing a single pixel almost <strong>never</strong> changes the true label of the image. This fundamental difference in data robustness is why we need specialized approaches for game level generation.</p>
             </div>
-        </section>
+        
 
             <div class="note-box">
                 <h4>📊 Important Distinction</h4>
