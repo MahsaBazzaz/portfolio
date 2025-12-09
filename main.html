@@ -4,8 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>When a Single Tile Breaks Everything: Game Level Robustness</title>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
     <style>
-                * {
+        * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
@@ -27,7 +29,7 @@
         header {
             text-align: center;
             padding: 60px 20px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #575d7b 0%, #381e53 100%);
             color: white;
             margin-bottom: 40px;
         }
@@ -271,14 +273,140 @@
             overflow-x: auto;
             font-family: 'Courier New', monospace;
         }
+
+    .formula-box {
+        background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+        border-left: 4px solid #6366f1;
+        padding: 1.5rem 2rem;
+        margin: 1.5rem 0;
+        border-radius: 0 8px 8px 0;
+        overflow-x: auto;
+    }
+    
+    .formula-box .formula-label {
+        font-family: 'Helvetica Neue', sans-serif;
+        font-size: 0.85em;
+        font-weight: 600;
+        color: #6366f1;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        margin-bottom: 0.75rem;
+    }
+    
+    .formula-box .formula-content {
+        font-size: 1.1em;
+        text-align: center;
+        padding: 0.5rem 0;
+    }
+    
+    .intuition-note {
+        background: #fffbeb;
+        border: 1px solid #fcd34d;
+        padding: 1rem 1.25rem;
+        border-radius: 8px;
+        margin: 1rem 0;
+        font-size: 0.95em;
+    }
+    
+    .intuition-note strong {
+        color: #b45309;
+    }
+    
+    .key-insight {
+        background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%);
+        border: 1px solid #34d399;
+        padding: 1.25rem 1.5rem;
+        border-radius: 8px;
+        margin: 1.5rem 0;
+    }
+    
+    .key-insight h4 {
+        color: #047857;
+        margin: 0 0 0.5rem 0;
+        font-size: 1em;
+    }
+    
+    .comparison-table {
+        width: 100%;
+        margin: 1.5rem 0;
+        border-collapse: collapse;
+    }
+    
+    .comparison-table th, .comparison-table td {
+        padding: 0.75rem 1rem;
+        text-align: left;
+        border-bottom: 1px solid #e2e8f0;
+    }
+    
+    .comparison-table th {
+        background: #f8fafc;
+        font-weight: 600;
+        color: #475569;
+    }
+    
+    .highlight-text {
+        background: linear-gradient(120deg, #fef3c7 0%, #fde68a 100%);
+        padding: 0 4px;
+        border-radius: 2px;
+    }
+    .results-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 1.5rem 0;
+        font-size: 0.95em;
+    }
+    
+    .results-table th,
+    .results-table td {
+        padding: 0.75rem 1rem;
+        text-align: left;
+        border-bottom: 1px solid #e2e8f0;
+    }
+    
+    .results-table th {
+        background: #f8fafc;
+        font-weight: 600;
+        color: #475569;
+        border-bottom: 2px solid #cbd5e1;
+    }
+    
+    .results-table tbody tr:hover {
+        background: #f8fafc;
+    }
+    
+    .results-table .highlight-cell {
+        background: #fef2f2;
+        color: #dc2626;
+        font-weight: 600;
+    }
+    
+    .plot-container {
+        width: 100%;
+        min-height: 400px;
+        margin: 1.5rem 0;
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+        background: #fafafa;
+    }
+    
+    #results p {
+        line-height: 1.8;
+        margin-bottom: 1rem;
+    }
+    
+    #results h3 {
+        margin-top: 2.5rem;
+        margin-bottom: 1rem;
+        color: #1a202c;
+    }
+
     </style>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
 <body>
     <header>
-        <h1>When a Single Tile Breaks Everything</h1>
-        <p class="subtitle">Understanding Robustness in Game Level Generation through Structured Discrete Data</p>
-        <div class="authors">Mahsa Bazzaz & Seth Cooper · Northeastern University · FDG 2025</div>
+        <h1>Analysis of Robustness of a Large Game Corpus</h1>
+        <div class="authors">Mahsa Bazzaz & Seth Cooper· FDG 2025</div>
     </header>
 
     <div class="container">
@@ -294,7 +422,7 @@
 
             <div class="comparison-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px; margin: 30px 0;">
                 <div class="comparison-box" style="padding: 20px; background: #f0f7ff; border-radius: 8px;">
-                    <h4 style="color: #2563eb; margin-bottom: 15px;">📷 Traditional Images (CIFAR-10, ImageNet)</h4>
+                    <h4 style="color: #2563eb; margin-bottom: 15px;"> Traditional Images (CIFAR-10, ImageNet)</h4>
                     <div style="background: white; padding: 15px; border-radius: 4px; margin-bottom: 15px;">
                         <canvas id="adversarial-demo" width="300" height="150"></canvas>
                         <p style="font-size: 0.9em; color: #666; margin-top: 10px; text-align: center;">
@@ -303,7 +431,8 @@
                         </p>
                     </div>
                     <ul style="list-style: none; padding: 0;">
-                        <li><strong>Pixel</strong>: Smallest visual element (1/65,536 in a 256×256 image)</li>
+                        <br>
+                        <li><strong>Pixel</strong>: Smallest visual element (165536 in a 256×256 image)</li>
                         <li><strong>Redundancy</strong>: Adjacent pixels often similar</li>
                         <li><strong>Continuity</strong>: Small changes → small effects</li>
                         <li><strong>Outcome</strong>: Robust to noise</li>
@@ -311,13 +440,16 @@
                 </div>
 
                 <div class="comparison-box" style="padding: 20px; background: #fef3f2; border-radius: 8px;">
-                    <h4 style="color: #dc2626; margin-bottom: 15px;">🎮 Game Levels (Structured Discrete)</h4>
+                    <h4 style="color: #dc2626; margin-bottom: 15px;">Game Levels (Structured Discrete)</h4>
                     <div style="background: white; padding: 15px; border-radius: 4px; margin-bottom: 15px;">
                         <canvas id="maze-comparison" width="300" height="150"></canvas>
+                        
                         <p style="font-size: 0.9em; color: #666; margin-top: 10px; text-align: center;">
                             Adding <strong>just one wall tile</strong> (shown in red)<br>
                             completely blocks the only path to the goal
                         </p>
+                        <br>
+                        <br>
                     </div>
                     <ul style="list-style: none; padding: 0;">
                         <li><strong>Tile</strong>: Functional building block with gameplay mechanics</li>
@@ -335,12 +467,12 @@
             <p>Structured discrete data, whether game levels or other domains, must satisfy various types of constraints. Understanding these constraints is crucial for developing effective generation models:</p>
 
             <div style="background: #f0f4f8; padding: 25px; border-radius: 12px; margin: 20px 0;">
-                <h4 style="color: #1e40af; margin-bottom: 20px;">🎯 Types of Constraints</h4>
+                <h4 style="color: #1e40af; margin-bottom: 20px;">Types of Constraints</h4>
                 
                 <!-- Hard vs Soft Constraints -->
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 25px;">
                     <div style="background: white; padding: 20px; border-radius: 8px; border-left: 4px solid #28a745;">
-                        <h5 style="color: #28a745; margin-bottom: 15px;">✓ Hard Constraints</h5>
+                        <h5 style="color: #28a745; margin-bottom: 15px;">Hard Constraints</h5>
                         <p style="margin: 0; color: #495057;">
                             <strong>Definition:</strong> Mandatory conditions that MUST be satisfied for validity. Violation means complete failure.
                         </p>
@@ -350,7 +482,7 @@
                     </div>
                     
                     <div style="background: white; padding: 20px; border-radius: 8px; border-left: 4px solid #ffc107;">
-                        <h5 style="color: #f57c00; margin-bottom: 15px;">~ Soft Constraints</h5>
+                        <h5 style="color: #f57c00; margin-bottom: 15px;">Soft Constraints</h5>
                         <p style="margin: 0; color: #495057;">
                             <strong>Definition:</strong> Preferred conditions that SHOULD be satisfied for quality. Violation reduces desirability but not validity.
                         </p>
@@ -361,11 +493,11 @@
                 </div>
 
                 <!-- Local vs Global Constraints -->
-                <h4 style="color: #1e40af; margin: 25px 0 20px 0;">📍 Scope of Constraints</h4>
+                <h4 style="color: #1e40af; margin: 25px 0 20px 0;">Scope of Constraints</h4>
                 
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
                     <div style="background: white; padding: 20px; border-radius: 8px; border-left: 4px solid #9333ea;">
-                        <h5 style="color: #7c3aed; margin-bottom: 15px;">🔍 Local Constraints</h5>
+                        <h5 style="color: #7c3aed; margin-bottom: 15px;">Local Constraints</h5>
                         <p style="margin: 0; color: #495057;">
                             <strong>Definition:</strong> Rules governing relationships between neighboring or nearby elements.
                         </p>
@@ -375,7 +507,7 @@
                     </div>
                     
                     <div style="background: white; padding: 20px; border-radius: 8px; border-left: 4px solid #0ea5e9;">
-                        <h5 style="color: #0284c7; margin-bottom: 15px;">🌐 Global Constraints</h5>
+                        <h5 style="color: #0284c7; margin-bottom: 15px;">Global Constraints</h5>
                         <p style="margin: 0; color: #495057;">
                             <strong>Definition:</strong> Rules governing properties of the entire structure as a whole.
                         </p>
@@ -386,7 +518,7 @@
                 </div>
                 
                 <div class="note-box" style="margin-top: 20px; background: #fef3c7; border-left-color: #f59e0b;">
-                    <h4 style="color: #d97706;">🔄 The Interaction Effect</h4>
+                    <h4 style="color: #d97706;">The Interaction Effect</h4>
                     <p style="margin-bottom: 10px;">These constraint dimensions combine to create four distinct categories:</p>
                     <ul style="margin-left: 20px;">
                         <li><strong>Hard + Local:</strong> Solid ground tiles must exist under the player spawn point</li>
@@ -403,7 +535,7 @@
 
             <div style="background: white; border-radius: 8px; padding: 20px; margin: 20px 0; box-shadow: 0 2px 10px rgba(0,0,0,0.08);">
                     <div style="text-align: center; margin-bottom: 20px;">
-                        <img src="local_constraint.png" alt="Description of the resource image a.png" style="max-width: 100%; height: auto; border-radius: 4px;">
+                        <img src="./resources/local_constraint.png" alt="Description of the resource image a.png" style="max-width: 100%; height: auto; border-radius: 4px;">
                     </div>
                     
                     <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; margin-bottom: 15px;">
@@ -435,7 +567,7 @@
             
             <div class="demo-container">
                 <div class="demo-box">
-                    <h4>✅ Solvable Level</h4>
+                    <h4>Solvable Level</h4>
                     <canvas id="solvable-level" class="level-canvas" width="320" height="320"></canvas>
                     <div class="controls">
                         <button id="play-solvable">▶ Play Solution</button>
@@ -448,7 +580,7 @@
                 </div>
                 
                 <div class="demo-box">
-                    <h4>❌ One Tile Removed</h4>
+                    <h4>Unsolvable Level</h4>
                     <canvas id="unsolvable-level" class="level-canvas" width="320" height="320"></canvas>
                     <div class="controls">
                         <button id="play-unsolvable">▶ Try Solution</button>
@@ -470,25 +602,125 @@
                 <li><strong>No tolerance for errors</strong>: Unlike image generation where slight imperfections are acceptable, a single misplaced tile can render a level unplayable. Even state-of-the-art models like transformers, VAEs, and GANs frequently generate levels with broken local structures (pipes that don't connect, floating platforms, inaccessible areas).</li>
                 <li><strong>Training data is sparse</strong>: Unlike millions of images available for computer vision, game level datasets typically contain only hundreds to thousands of examples, making it harder to learn these complex constraints.</li>
             </ol>
+        </section>
 
-        <!-- Section 2: The GGLC Dataset -->
+        <!-- Section 2: Robustness Analysis -->
+        <section id="robustness">
+            <h3>2. What is Data Robustness?</h3>
+    
+            <p>
+                The idea of <strong>robustness</strong> originally comes from studying classifiers—machine learning models 
+                that assign labels to data points. A robust classifier is one that gives the same answer even when 
+                the input is slightly perturbed. But here, we flip the question: instead of asking 
+                <em>"is the classifier robust?"</em> we ask <em>"is the data itself robust?"</em>
+            </p>
+            
+            <p>
+                Think of it this way: if you take a data point and nudge it just a tiny bit, does its 
+                <span class="highlight-text">true label</span> change? For most image datasets, the answer is no—a 
+                slightly noisy photo of a cat is still a cat. But for game levels, a single tile change can flip 
+                a level from solvable to impossible.
+            </p>
+
+            <h4>The Original Definition (for Classifiers)</h4>
+            
+            <p>
+                Robustness was first defined to measure how consistently a classifier \(f\) behaves when inputs 
+                are slightly perturbed. Given a distribution of data \(\mathcal{D}\) and a distance threshold \(r\), 
+                the robustness measures the probability that nearby points get the same predicted label:
+            </p>
+            
+            <div class="formula-box">
+                <div class="formula-label">Classifier Robustness</div>
+                <div class="formula-content">
+                    \[
+                    A_r(f, \mathcal{D}) = \mathbb{P}_{x \sim \mathcal{D}}\left[f(x) = f(x') \;\Big|\; \forall x',\, d(x, x') \leq r\right]
+                    \]
+                </div>
+            </div>
+            
+            <p>
+                In plain English: pick a random data point \(x\). Now consider <em>all</em> points \(x'\) within 
+                distance \(r\) of it. Robustness is the probability that the classifier gives all of them the 
+                same label. High robustness means the classifier is stable—small input changes don't flip predictions.
+            </p>
+
+            <h4>Our Twist: Robustness of the Data Itself</h4>
+            
+            <p>
+                We adapt this idea to measure a property of the <em>data</em>, not the classifier. Instead of 
+                asking whether a model's predictions stay consistent, we ask whether the <strong>true labels</strong> 
+                stay consistent under small perturbations:
+            </p>
+            
+            <div class="formula-box">
+                <div class="formula-label">Data Robustness</div>
+                <div class="formula-content">
+                    \[
+                    D_r(\mathcal{D}) = \mathbb{P}_{x \sim \mathcal{D}}\left[\text{Label}(x) = \text{Label}(x') \;\Big|\; \forall x',\, d(x, x') \leq r\right]
+                    \]
+                </div>
+            </div>
+            
+            <div class="intuition-note">
+                <strong>💡 The Key Insight:</strong> We replace the classifier's prediction \(f(x)\) with the 
+                ground-truth label. This tells us about the <em>nature of the data</em> itself—how "fragile" 
+                or "stable" the label boundaries are.
+            </div>
+
+            <h4>Non-Robustness: Measuring Sensitivity</h4>
+            
+            <p>
+                In practice, it's often more useful to measure the opposite—<strong>non-robustness</strong>—which 
+                captures how likely it is that a small change <em>will</em> flip the label:
+            </p>
+            
+            <div class="formula-box">
+                <div class="formula-label">Non-Robustness (Our Main Metric)</div>
+                <div class="formula-content">
+                    \[
+                    \text{ND}_r(\mathcal{D}) = \mathbb{P}_{x \sim \mathcal{D}}\left[\text{Label}(x) \neq \text{Label}(x') \;\Big|\; \exists x',\, d(x, x') \leq r\right]
+                    \]
+                </div>
+            </div>
+            
+            <p>
+                This reads as: pick a random data point \(x\). If there <em>exists</em> any nearby point \(x'\) 
+                (within distance \(r\)) that has a <em>different</em> label, we count that. Non-robustness is the 
+                probability of finding such a label-flipping neighbor.
+            </p>
+            
+            <div class="key-insight">
+                <h4>📊 Interpreting the Numbers</h4>
+                <p>
+                    <strong>Higher non-robustness = more sensitive data.</strong> If \(\text{ND}_r(\mathcal{D})\) is 
+                    high, it means many data points are "close to the edge"—small perturbations can easily change 
+                    their labels. For game levels, this manifests as levels that become unsolvable with just one 
+                    tile swap.
+                </p>
+            </div>
+
+            <div class="note-box">
+                <h4>Important Distinction</h4>
+                <p><strong>Robustness of Data vs. Robustness of Classifier:</strong></p>
+                <ul style="margin-left: 20px; margin-top: 10px;">
+                    <li><strong>Data Robustness:</strong> Whether the true label actually changes with input perturbation (our focus)</li>
+                    <li><strong>Classifier Robustness:</strong> Whether a model's prediction changes (traditional adversarial ML focus)</li>
+                </ul>
+                <p style="margin-top: 10px;">For game levels, the ground truth <em>should</em> change when critical tiles are modified - a robust classifier needs to capture this sensitivity!</p>
+            </div>
+        </section>
+
+        <!-- Section 3: The GGLC Dataset -->
         <section id="gglc-dataset">
-            <h2>2. The Generated Game Level Corpus (GGLC)</h2>
+            <h2>3. The Generated Game Level Corpus (GGLC)</h2>
             
             <h3>Why We Created It</h3>
-            <p>Existing game level datasets are small (typically hundreds of levels) and often copyrighted. We needed a large, diverse, and freely available dataset to study the unique challenges of game level generation.</p>
+            <p>Existing game level datasets are small (typically hundreds of levels) and often copyrighted. We created a large, diverse, and freely available dataset to study these unique features of game level.</p>
             
             <h3>How We Generate Levels: The Sturgeon Engine</h3>
-            <p>We use <strong>Sturgeon</strong>, a constraint-based level generator that ensures both local patterns (like proper pipe connections) and global constraints (like solvability).</p>
-            
-            <div class="code-snippet">
-                <strong>Sturgeon Generation Process:</strong><br>
-                1. Define tile patterns from example levels<br>
-                2. Set global constraints (start → goal path must exist)<br>
-                3. Set local constraints (structural patterns)<br>
-                4. Use SAT/SMT solvers to find valid solutions<br>
-                5. Verify solvability through pathfinding or playthrough simulation
-            </div>
+            <p>We use <strong>Sturgeon</strong>, a 2D tile-based level generator that transforms game level generation into binary constraint solving problems.</p>
+            <p> You can find Sturgeon codebase in this <a href="https://github.com/crowdgames/sturgeon-pub" target="_blank">Github Repository</a>.</p>
 
             
             <h3>Our Games Collection</h3>
@@ -497,7 +729,7 @@
             <div class="game-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px;">
                 
                 <div class="game-card" style="text-align: center; border: 1px solid #e0e0e0; padding: 15px; border-radius: 8px; display: flex; flex-direction: column; justify-content: space-between;">
-                    <h4>🗿 Cave</h4>
+                    <h4>Cave</h4>
                     <img src="./games/cave.png" alt="Top-down cave maze" class="level-image" 
                         style="width: 100%; height: auto; max-height: 180px; object-fit: contain; border-radius: 4px;">
                     <p>Top-down maze navigation with keys and doors</p>
@@ -511,7 +743,7 @@
                 </div>
                 
                 <div class="game-card" style="text-align: center; border: 1px solid #e0e0e0; padding: 15px; border-radius: 8px; display: flex; flex-direction: column; justify-content: space-between;">
-                    <h4>🏃 Platform</h4>
+                    <h4>Platform</h4>
                     <img src="./games/platform.png" alt="Mario-inspired platformer" class="level-image" 
                         style="width: 100%; height: auto; max-height: 250px; object-fit: contain; border-radius: 4px;">
                     <p>Mario-inspired platformer with jumps</p>
@@ -529,7 +761,7 @@
             <div class="game-row" style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px;">
                 
                 <div class="game-card" style="text-align: center; border: 1px solid #e0e0e0; padding: 15px; border-radius: 8px; display: flex; flex-direction: column; justify-content: space-between;">
-                    <h4>📦 Crates</h4>
+                    <h4>Crates</h4>
                     <img src="./games/soko.png" alt="Sokoban puzzle with crates" class="level-image" 
                         style="width: 100%; height: auto; max-height: 250px; object-fit: contain; border-radius: 4px;">
                     <p>Sokoban-style puzzle pushing boxes</p>
@@ -543,7 +775,7 @@
                 </div>
                 
                 <div class="game-card" style="text-align: center; border: 1px solid #e0e0e0; padding: 15px; border-radius: 8px; display: flex; flex-direction: column; justify-content: space-between;">
-                    <h4>🐱 Vertical</h4>
+                    <h4>Vertical</h4>
                     <img src="./games/10003.png" alt="Vertical platformer level" class="level-image" 
                         style="width: 100%; height: auto; max-height: 250px; object-fit: contain; border-radius: 4px;">
                     <p>Vertical platformer with wall climbing</p>
@@ -557,7 +789,7 @@
                 </div>
 
                 <div class="game-card" style="text-align: center; border: 1px solid #e0e0e0; padding: 15px; border-radius: 8px; display: flex; flex-direction: column; justify-content: space-between;">
-                    <h4>⛷️ Slide</h4>
+                    <h4>Slide</h4>
                     <img src="./games/slide.png" alt="Ice sliding puzzle" class="level-image" 
                         style="width: 100%; height: auto; max-height: 250px; object-fit: contain; border-radius: 4px;">
                     <p>Ice physics navigation puzzle</p>
@@ -573,81 +805,142 @@
             </div>
         </section>
 
-        <!-- Section 3: Robustness Analysis -->
-        <section id="robustness">
-            <h2>3. Measuring Robustness</h2>
-            
-            <h3>What is Data Robustness?</h3>
-            <p>We define <strong>robustness</strong> as the probability that similar inputs share the same label. For game levels, this means measuring how likely small changes are to affect solvability.</p>
-            
-            <div class="code-snippet">
-                <strong>Non-Robustness Formula:</strong><br>
-                ND_r(D) = P[Label(x) ≠ Label(x') | ∃x', distance(x,x') ≤ r]<br><br>
-                Higher values = More sensitive to changes
-            </div>
+        <!-- Section 4: Results -->
+        <section id="results">
+            <h2>4. Experiments</h2>
+    
+    <p>
+        To validate our claim that game levels are fundamentally less robust than traditional ML datasets, 
+        we conducted two complementary experiments. The first directly measures the <em>true distribution</em> 
+        by exhaustively testing all possible single-tile changes. The second analyzes our <em>generated dataset</em> 
+        by embedding levels into a continuous space and measuring how often nearby points have different labels.
+    </p>
 
-            <h3>Interactive Robustness Comparison</h3>
-            <div class="slider-container">
-                <label for="radius-slider">Radius (r): <span id="radius-value">0.01</span></label>
-                <input type="range" id="radius-slider" class="slider" min="0" max="100" value="10">
-            </div>
-            <div id="robustness-plot" class="plot-container"></div>
+    <h3>True Distribution: Exhaustive Single-Tile Analysis</h3>
+    
+    <p>
+        For the true distribution experiment, we generated 100 random levels from each game and systematically 
+        tested <strong>every possible single-tile replacement</strong>. This gives us the exact probability that 
+        a random single-tile change will break a level—no approximation needed.
+    </p>
+    <br>
+    <p>
+        The table below shows what percentage of single-tile changes either 
+        break solvability (the level becomes impossible to complete) or break acceptability (the level 
+        violates local structural constraints, like broken pipe segments):
+    </p>
 
-            <h3>Level Embedding Visualization</h3>
-            <p>Hover over points to see the actual game levels. Blue = Solvable, Red = Unsolvable</p>
-            <div id="embedding-plot" class="plot-container"></div>
+    <table class="results-table">
+        <thead>
+            <tr>
+                <th>Game</th>
+                <th>Changed Solvability</th>
+                <th>Changed Acceptability</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><strong>Cave</strong></td>
+                <td>43.1%</td>
+                <td>43.0%</td>
+            </tr>
+            <tr>
+                <td><strong>Platform</strong></td>
+                <td>17.1%</td>
+                <td>0.1%</td>
+            </tr>
+            <tr>
+                <td><strong>Crates</strong></td>
+                <td>78.9%</td>
+                <td>0%</td>
+            </tr>
+            <tr>
+                <td><strong>Vertical</strong></td>
+                <td>17.5%</td>
+                <td>42.5%</td>
+            </tr>
+        </tbody>
+    </table>
+    
+    <p>
+        <strong>Crates</strong> (our Sokoban-style puzzle game) is the most fragile: nearly 4 out of 5 random 
+        tile changes break the level. This makes sense—pushing crates into corners or blocking narrow passages 
+        easily creates deadlocks. <strong>Cave</strong> levels are also highly sensitive because maze-like 
+        structures have many potential chokepoints where a single wall tile can block the only path.
+    </p>
+    
+    <p>
+        Compare this to image datasets like CIFAR-10 or MNIST, where changing a single pixel 
+        <strong>almost never</strong> changes the true label. A cat with one different pixel is still a cat. 
+        But a puzzle level with one different tile might be completely unsolvable.
+    </p>
 
-            <div class="note-box">
-                <h4>💡 Key Finding from Our Research</h4>
-                <p>We measured the <strong>non-robustness</strong> of different game types when subjected to single-tile changes:</p>
-                <ul style="margin: 10px 0 0 20px;">
-                    <li><strong>Cave:</strong> 43.1% of changes break solvability</li>
-                    <li><strong>Platform:</strong> 17.1% of changes break solvability</li>
-                    <li><strong>Crates:</strong> 78.9% of changes break solvability</li>
-                    <li><strong>Vertical:</strong> 17.5% of changes break solvability</li>
-                </ul>
-                <p style="margin-top: 10px;">Compare this to CIFAR-10 or MNIST, where changing a single pixel almost <strong>never</strong> changes the true label of the image. This fundamental difference in data robustness is why we need specialized approaches for game level generation.</p>
-            </div>
-        
+    <h3>Sample Distribution: Embedding-Based Analysis</h3>
+    
+    <p>
+        The exhaustive approach above works for measuring sensitivity to single-tile changes, but how do we 
+        compare game levels to image datasets on equal footing? We can't enumerate all single-pixel changes 
+        for CIFAR-10 images—there are too many pixels and possible values.
+    </p>
+    
+    <p>
+        Instead, we embed all data into a shared continuous space using <strong>CLIP</strong> (chosen because 
+        <a href="https://dl.acm.org/doi/full/10.1145/3613904.3642077" target="_blank">prior work</a> showed it aligns well 
+        with human similarity judgments for game levels), then reduce to 2D with <strong>UMAP</strong>. In this 
+        space, we measure non-robustness by checking whether nearby points (within radius \(r\)) have different labels.
+    </p>
+    
+    <p>
+        The plot below shows non-robustness across different radius values. Higher values mean the data is 
+        more sensitive—nearby points in embedding space are more likely to have opposite labels:
+    </p>
 
-            <div class="note-box">
-                <h4>📊 Important Distinction</h4>
-                <p><strong>Robustness of Data vs. Robustness of Classifier:</strong></p>
-                <ul style="margin-left: 20px; margin-top: 10px;">
-                    <li><strong>Data Robustness:</strong> Whether the true label actually changes with input perturbation (our focus)</li>
-                    <li><strong>Classifier Robustness:</strong> Whether a model's prediction changes (traditional adversarial ML focus)</li>
-                </ul>
-                <p style="margin-top: 10px;">For game levels, the ground truth <em>should</em> change when critical tiles are modified - a robust classifier needs to capture this sensitivity!</p>
-            </div>
+    <div id="robustness-plot" class="plot-container"></div>
+
+    <p>
+        <strong>Cave</strong> dominates across the board, with non-robustness reaching 36% even at small perturbation sizes. This aligns with our exhaustive analysis: maze games are inherently brittle. Notice that even <strong>Platform</strong> and <strong>Crates</strong> exceed CIFAR-10 at larger radius values, despite CIFAR-10 having far more "pixels" per sample than our games have tiles.
+    </p>
+
+    <h3>Visualizing the Label Boundaries</h3>
+    
+    <p>
+        To see <em>why</em> game levels are less robust, we can visualize the embedding space directly. 
+        The plots below show solvable (blue) and unsolvable (red) levels projected into 2D. Notice how 
+        the classes overlap and interleave—there's no clean separation. Hover over points to see actual levels:
+    </p>
+
+    <div id="embedding-plot" class="plot-container"></div>
+    
+    <p>
+        The purple regions where classes overlap are exactly where non-robustness is highest. A generative 
+        model trying to produce solvable levels must navigate this treacherous landscape where a tiny 
+        step in the wrong direction crosses into unsolvable territory.
+    </p>
         </section>
 
-        <!-- Section 4: Resources -->
+        <!-- Section 5: Resources -->
         <section id="resources">
-            <h2>4. Learn More</h2>
+            <h2>5. Learn More</h2>
             
             <div class="links-grid">
-                <a href="#" class="link-card">
+                <a href="https://dl.acm.org/doi/pdf/10.1145/3723498.3723820" class="link-card">
                     <i class="fas fa-file-pdf"></i>
                     <h4>Read Paper</h4>
-                    <p>Full FDG 2025 Paper</p>
                 </a>
                 
                 <a href="https://github.com/TheGGLC" class="link-card" target="_blank">
                     <i class="fab fa-github"></i>
                     <h4>GitHub</h4>
-                    <p>Dataset & Code</p>
                 </a>
                 
                 <a href="#" class="link-card">
                     <i class="fas fa-video"></i>
                     <h4>Video</h4>
-                    <p>Conference Presentation</p>
                 </a>
                 
-                <a href="#" class="link-card">
-                    <i class="fas fa-presentation-screen"></i>
+                <a href="./resources/slides/FDG-GGLC-presentation.pdf" class="link-card">
+                    <i class="fas fa-chalkboard"></i>
                     <h4>Slides</h4>
-                    <p>Presentation Deck</p>
                 </a>
             </div>
         </section>
@@ -662,6 +955,7 @@
         function drawMazeComparison() {
             const canvas = document.getElementById('maze-comparison');
             const ctx = canvas.getContext('2d');
+            ctx.translate(40, 0);
             const tileSize = 10;
             
             // Simple maze - solvable
@@ -678,7 +972,6 @@
             // Draw solvable maze
             ctx.fillStyle = '#333';
             ctx.font = '11px Arial';
-            ctx.fillText('Solvable', 35, 12);
             
             for (let y = 0; y < solvableMaze.length; y++) {
                 for (let x = 0; x < solvableMaze[y].length; x++) {
@@ -710,33 +1003,15 @@
             ctx.lineTo(55, 75);
             ctx.stroke();
             ctx.setLineDash([]);
-            
-            // Draw arrow
-            ctx.strokeStyle = '#667eea';
-            ctx.lineWidth = 2;
-            ctx.beginPath();
-            ctx.moveTo(90, 60);
-            ctx.lineTo(120, 60);
-            ctx.stroke();
-            
-            // Arrow head
-            ctx.beginPath();
-            ctx.moveTo(117, 55);
-            ctx.lineTo(125, 60);
-            ctx.lineTo(117, 65);
-            ctx.closePath();
-            ctx.fillStyle = '#667eea';
-            ctx.fill();
-            
-            // Draw "+" sign
-            ctx.fillStyle = '#dc2626';
-            ctx.font = '16px Arial';
-            ctx.fillText('+', 103, 45);
+
+        
             
             // Unsolvable maze (with one extra wall)
             ctx.fillStyle = '#333';
             ctx.font = '11px Arial';
-            ctx.fillText('Unsolvable', 195, 12);
+            ctx.fillText('Unsolvable Level', 145, 125);
+            ctx.fillText('Solvable Level', 5, 125);
+
             
             const unsolvableMaze = [
                 [1,1,1,1,1,1,1],
@@ -790,7 +1065,7 @@
             // Add legend
             ctx.fillStyle = '#666';
             ctx.font = '10px Arial';
-            ctx.fillText('🟩 Start  🟨 Goal  ⬛ Wall', 80, 145);
+            ctx.fillText('🟩 Start  🟨 Goal  ⬛ Wall', 50, 8);
         }
 
         // Initialize maze comparison
@@ -834,8 +1109,7 @@
             ctx.fillStyle = '#333';
             ctx.font = '12px Arial';
             ctx.textAlign = 'center';
-            ctx.fillText('Original', 70, 130);
-            ctx.fillText('🐼 Panda: 99%', 70, 145);
+            ctx.fillText('Panda', 70, 145);
             
             // Draw arrow
             ctx.strokeStyle = '#667eea';
@@ -893,8 +1167,7 @@
             ctx.fillStyle = '#333';
             ctx.font = '12px Arial';
             ctx.textAlign = 'center';
-            ctx.fillText('+ Adversarial Noise', 230, 130);
-            ctx.fillText('🦒 "Gibbon": 99%', 230, 145);
+            ctx.fillText('Still Panda!', 230, 145);
         }
 
         // Initialize adversarial example
@@ -1221,89 +1494,98 @@
         }
 
         // Robustness plot
-        const radiusSlider = document.getElementById('radius-slider');
-        const radiusValue = document.getElementById('radius-value');
 
-        function updateRobustnessPlot(radius) {
-            const radiusVal = radius / 1000;
-            radiusValue.textContent = radiusVal.toFixed(3);
-            
-            // Data from the paper's Table 3
-            const datasets = ['CIFAR-10', 'MNIST', 'Cave', 'Platform', 'Crates', 'Vertical'];
-            const robustnessData = {
-                'CIFAR-10': [0, 0, 0.1, 2.9, 6.7, 12.4, 12.8, 14.4, 18.9],
-                'MNIST': [0, 0, 0.1, 1.6, 3.7, 5.8, 6.2, 6.1, 10.1],
-                'Cave': [0, 0.7, 2.3, 24.3, 29.6, 32.6, 32.6, 35.2, 36.2],
-                'Platform': [0, 0, 0, 2.0, 5.9, 12.5, 14.1, 21.2, 28.1],
-                'Crates': [0, 0, 0.3, 2.5, 6.0, 13.1, 15.3, 20.8, 25.8],
-                'Vertical': [0, 0, 0.1, 1.1, 3.2, 5.6, 6.7, 10.3, 15.9]
-            };
-            
-            const radiusValues = [0.00001, 0.00005, 0.0001, 0.0005, 0.001, 0.005, 0.01, 0.05, 0.1];
-            
-            // Find the closest radius index
-            let idx = 0;
-            for (let i = 0; i < radiusValues.length; i++) {
-                if (radiusVal <= radiusValues[i]) {
-                    idx = i;
-                    break;
-                }
-                idx = i;
-            }
-            
-            const traces = datasets.map(dataset => ({
-                x: radiusValues,
-                y: robustnessData[dataset],
-                type: 'scatter',
-                mode: 'lines+markers',
-                name: dataset,
-                line: {
-                    width: dataset.includes('Cave') || dataset.includes('Platform') || 
-                           dataset.includes('Crates') || dataset.includes('Vertical') ? 3 : 2
-                }
-            }));
-            
-            // Add vertical line for current radius
-            traces.push({
-                x: [radiusVal, radiusVal],
-                y: [0, 40],
-                type: 'scatter',
-                mode: 'lines',
-                name: 'Current Radius',
-                line: {
-                    color: 'rgba(255, 0, 0, 0.5)',
-                    width: 2,
-                    dash: 'dash'
-                },
-                showlegend: false
-            });
-            
-            const layout = {
-                title: 'Non-Robustness Comparison (Higher = More Sensitive)',
-                xaxis: {
-                    title: 'Radius (r)',
-                    type: 'log',
-                    range: [-5, -0.5]
-                },
-                yaxis: {
-                    title: 'Non-Robustness (%)',
-                    range: [0, 40]
-                },
-                legend: {
-                    x: 0.02,
-                    y: 0.98
-                },
-                hovermode: 'x unified'
-            };
-            
-            Plotly.newPlot('robustness-plot', traces, layout, {responsive: true});
+        function updateRobustnessPlot(sliderVal) {
+
+            // Data from Table 3 in the paper
+        const robustnessData = {
+            'CIFAR-10': [0.0, 0.0, 0.1, 2.9, 6.7, 12.4, 12.8, 14.4, 18.9],
+            'MNIST': [0.0, 0.0, 0.1, 1.6, 3.7, 5.8, 6.2, 6.1, 10.1],
+            'cave': [0.0, 0.7, 2.3, 24.3, 29.6, 32.6, 32.6, 35.2, 36.2],
+            'platform': [0.0, 0.0, 0.0, 2.0, 5.9, 12.5, 14.1, 21.2, 28.1],
+            'crates': [0.0, 0.0, 0.3, 2.5, 6.0, 13.1, 15.3, 20.8, 25.8],
+            'vertical': [0.0, 0.0, 0.1, 1.1, 3.2, 5.6, 6.7, 10.3, 15.9]
+        };
+        
+        const radiusValues = [0.00001, 0.00005, 0.0001, 0.0005, 0.001, 0.005, 0.01, 0.05, 0.1];
+        
+        // Calculate average for each dataset to sort by (highest first)
+        const datasetAvgs = Object.entries(robustnessData).map(([name, values]) => ({
+            name,
+            values,
+            avg: values.reduce((a, b) => a + b, 0) / values.length
+        }));
+        
+        // Sort by average descending (highest values first in tooltip)
+        datasetAvgs.sort((a, b) => b.avg - a.avg);
+        
+        // Color palette
+        const colors = {
+            'cave': '#e41a1c',
+            'platform': '#377eb8',
+            'crates': '#4daf4a',
+            'vertical': '#984ea3',
+            'CIFAR-10': '#ff7f00',
+            'MNIST': '#a65628'
+        };
+        
+        // Create traces in sorted order
+        const traces = datasetAvgs.map(({ name, values }) => ({
+            x: radiusValues,
+            y: values,
+            type: 'scatter',
+            mode: 'lines+markers',
+            name: name,
+            line: {
+                width: ['cave', 'platform', 'crates', 'vertical'].includes(name) ? 3 : 2,
+                color: colors[name]
+            },
+            marker: {
+                size: 6,
+                color: colors[name]
+            },
+            hovertemplate: `<b>${name}</b>: %{y:.1f}%<extra></extra>`
+        }));
+        
+        const layout = {
+            title: {
+                text: 'Non-Robustness Comparison (Higher = More Sensitive)',
+                font: { size: 16 }
+            },
+            xaxis: {
+                title: 'Radius (r)',
+                type: 'log',
+                range: [-5, -0.8],
+                gridcolor: '#e0e0e0'
+            },
+            yaxis: {
+                title: 'Non-Robustness (%)',
+                range: [0, 40],
+                gridcolor: '#e0e0e0'
+            },
+            legend: {
+                x: 0.02,
+                y: 0.98,
+                bgcolor: 'rgba(255,255,255,0.8)'
+            },
+            hovermode: 'x unified',
+            hoverlabel: {
+                bgcolor: 'white',
+                bordercolor: '#ccc'
+            },
+            plot_bgcolor: 'white',
+            paper_bgcolor: 'white'
+        };
+        
+        const config = {
+            responsive: true,
+            displayModeBar: true,
+            modeBarButtonsToRemove: ['lasso2d', 'select2d']
+        };
+        
+        Plotly.newPlot('robustness-plot', traces, layout, config);
         }
-
-        radiusSlider.addEventListener('input', (e) => {
-            updateRobustnessPlot(e.target.value);
-        });
-
-        // Initialize robustness plot
+        // Initialize plot
         updateRobustnessPlot(10);
 
         // Embedding visualization
