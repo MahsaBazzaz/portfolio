@@ -905,11 +905,13 @@
     
     <p>
         To see <em>why</em> game levels are less robust, we can visualize the embedding space directly. 
-        The plots below show solvable (blue) and unsolvable (red) levels projected into 2D. Notice how 
-        the classes overlap and interleave—there's no clean separation. Hover over points to see actual levels:
+The plots below show 100 randomly sampled solvable (blue) and unsolvable (red) levels projected into 2D. 
+Notice how the classes overlap and interleave—there's no clean separation. The complete visualizations 
+with all data points are available in the <a href="https://dl.acm.org/doi/pdf/10.1145/3723498.3723820" target="_blank">full paper</a>.
     </p>
 
-    <div id="embedding-plot" class="plot-container"></div>
+    <div id="embedding-plot" class="plot-container" style="height: 600px;"></div>
+
     
     <p>
         The purple regions where classes overlap are exactly where non-robustness is highest. A generative 
@@ -1537,7 +1539,7 @@
             mode: 'lines+markers',
             name: name,
             line: {
-                width: ['cave', 'platform', 'crates', 'vertical'].includes(name) ? 3 : 2,
+                width: ['cave', 'platform', 'crates', 'vertical', 'slide'].includes(name) ? 3 : 2,
                 color: colors[name]
             },
             marker: {
@@ -1588,99 +1590,82 @@
         // Initialize plot
         updateRobustnessPlot(10);
 
-        // Embedding visualization
-        function createEmbeddingPlot() {
-            // Simulated UMAP embeddings for demonstration
-            const numPoints = 200;
-            const data = [];
-            
-            // Generate clusters for each game type
-            const games = ['Cave', 'Platform', 'Crates', 'Vertical'];
-            const centers = [
-                {x: -5, y: 5}, {x: 5, y: 5}, {x: -5, y: -5}, {x: 5, y: -5}
-            ];
-            
-            games.forEach((game, i) => {
-                for (let j = 0; j < numPoints/4; j++) {
-                    const solvable = Math.random() > 0.3;
-                    const x = centers[i].x + (Math.random() - 0.5) * 4;
-                    const y = centers[i].y + (Math.random() - 0.5) * 4;
-                    
-                    data.push({
-                        x: x,
-                        y: y,
-                        game: game,
-                        solvable: solvable,
-                        color: solvable ? 'blue' : 'red',
-                        text: `${game} - ${solvable ? 'Solvable' : 'Unsolvable'}`
-                    });
-                }
-            });
-            
-            const solvableData = data.filter(d => d.solvable);
-            const unsolvableData = data.filter(d => !d.solvable);
-            
-            const trace1 = {
-                x: solvableData.map(d => d.x),
-                y: solvableData.map(d => d.y),
-                mode: 'markers',
-                type: 'scatter',
-                name: 'Solvable',
-                text: solvableData.map(d => d.text),
-                marker: {
-                    size: 8,
-                    color: '#4CAF50',
-                    opacity: 0.6
-                }
-            };
-            
-            const trace2 = {
-                x: unsolvableData.map(d => d.x),
-                y: unsolvableData.map(d => d.y),
-                mode: 'markers',
-                type: 'scatter',
-                name: 'Unsolvable',
-                text: unsolvableData.map(d => d.text),
-                marker: {
-                    size: 8,
-                    color: '#f44336',
-                    opacity: 0.6
-                }
-            };
-            
-            const layout = {
-                title: 'UMAP Embedding of Game Levels (CLIP Features)',
-                xaxis: {
-                    title: 'UMAP Dimension 1',
-                    zeroline: false
-                },
-                yaxis: {
-                    title: 'UMAP Dimension 2',
-                    zeroline: false
-                },
-                hovermode: 'closest',
-                showlegend: true
-            };
-            
-            Plotly.newPlot('embedding-plot', [trace1, trace2], layout, {responsive: true});
-        }
-
-        // Initialize embedding plot
-        createEmbeddingPlot();
-
-        // Add smooth scrolling for better UX
-        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-            anchor.addEventListener('click', function (e) {
-                e.preventDefault();
-                const target = document.querySelector(this.getAttribute('href'));
-                if (target) {
-                    target.scrollIntoView({
-                        behavior: 'smooth',
-                        block: 'start'
-                    });
-                }
-            });
+        async function loadAllEmbeddings() {
+    const games = ['cave', 'platform', 'crates', 'vertical'];
+    const titles = ['(a) Cave', '(b) Platform', '(c) Crates', '(d) Vertical'];
+    
+    const allData = {};
+    for (const game of games) {
+        const response = await fetch(`./resources/${game}_embedding.json`);
+        allData[game] = await response.json();
+    }
+    
+    const traces = [];
+    
+    games.forEach((game, i) => {
+        // Solvable points
+        traces.push({
+            x: allData[game].solvable.x,
+            y: allData[game].solvable.y,
+            mode: 'markers',
+            type: 'scatter',
+            name: 'Solvable',
+            legendgroup: 'solvable',
+            showlegend: i === 0,
+            marker: { color: '#3b82f6', size: 4, opacity: 0.5 },
+            xaxis: `x${i === 0 ? '' : i + 1}`,
+            yaxis: `y${i === 0 ? '' : i + 1}`
         });
+        
+        // Unsolvable points
+        traces.push({
+            x: allData[game].unsolvable.x,
+            y: allData[game].unsolvable.y,
+            mode: 'markers',
+            type: 'scatter',
+            name: 'Unsolvable',
+            legendgroup: 'unsolvable',
+            showlegend: i === 0,
+            marker: { color: '#ef4444', size: 4, opacity: 0.5 },
+            xaxis: `x${i === 0 ? '' : i + 1}`,
+            yaxis: `y${i === 0 ? '' : i + 1}`
+        });
+    });
+    
+    const layout = {
+        grid: { rows: 2, columns: 2, pattern: 'independent' },
+        annotations: titles.map((title, i) => ({
+            text: `<b>${title}</b>`,
+            xref: `x${i === 0 ? '' : i + 1} domain`,
+            yref: `y${i === 0 ? '' : i + 1} domain`,
+            x: 0.5,
+            y: 1.12,
+            showarrow: false,
+            font: { size: 14 }
+        })),
+        xaxis:  { showgrid: false, zeroline: false, showticklabels: false },
+        yaxis:  { showgrid: false, zeroline: false, showticklabels: false },
+        xaxis2: { showgrid: false, zeroline: false, showticklabels: false },
+        yaxis2: { showgrid: false, zeroline: false, showticklabels: false },
+        xaxis3: { showgrid: false, zeroline: false, showticklabels: false },
+        yaxis3: { showgrid: false, zeroline: false, showticklabels: false },
+        xaxis4: { showgrid: false, zeroline: false, showticklabels: false },
+        yaxis4: { showgrid: false, zeroline: false, showticklabels: false },
+        paper_bgcolor: 'white',
+        plot_bgcolor: '#fafafa',
+        margin: { t: 50, b: 30, l: 30, r: 30 },
+        legend: {
+            x: 0.5,
+            y: -0.05,
+            xanchor: 'center',
+            orientation: 'h'
+        }
+    };
+    
+    Plotly.newPlot('embedding-plot', traces, layout, { responsive: true });
+}
+
+loadAllEmbeddings();
     </script>
 </body>
 </html>
